@@ -31,7 +31,7 @@ export function Navbar() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <nav className="container flex h-16 items-center">
+      <nav className="container flex h-16 items-center px-4">
         <div className="mr-4 hidden md:flex">
           <Link href="/" className="mr-6 flex items-center space-x-2">
             <PlayCircle className="h-6 w-6 text-primary" />
@@ -89,7 +89,7 @@ export function Navbar() {
       </nav>
 
       {isMenuOpen && (
-        <div className="border-b bg-background p-4 md:hidden">
+        <div className="border-b bg-background p-4 px-4 md:hidden">
           <div className="grid gap-2">
             {navLinks.map((link) => (
               <Link

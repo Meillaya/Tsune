@@ -69,7 +69,7 @@ export function FeaturedCarousel({ items }: { items: Anime[] }) {
               </div>
               <div className="absolute inset-0 bg-gradient-to-t from-background to-transparent" />
               <div className="container relative flex h-full items-end pb-24">
-                <div className="max-w-2xl">
+                <div className="max-w-2xl px-4">
                   <h1 className="mb-4 text-4xl font-bold">
                     {anime.title.english || anime.title.romaji}
                   </h1>

@@ -81,7 +81,7 @@ export async function getPopularThisSeason(): Promise<Anime[]> {
   const query = `
     query {
       Page(page: 1, perPage: 12) {
-        media(type: ANIME, sort: POPULARITY_DESC, season: SPRING, seasonYear: 2024, status: RELEASING) {
+        media(type: ANIME, sort: POPULARITY_DESC, season: FALL, seasonYear: 2024, status: RELEASING) {
           id
           title {
             romaji

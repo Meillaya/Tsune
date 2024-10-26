@@ -25,7 +25,7 @@ export function AnimeSection({ title, anime }: AnimeSectionProps) {
   );
 
   return (
-    <section>
+    <section className="px-4 flex-col items-center">
       <div className="mb-6 flex items-center justify-between">
         <h2 className="text-2xl font-bold">{title}</h2>
         <div className="flex gap-2">
