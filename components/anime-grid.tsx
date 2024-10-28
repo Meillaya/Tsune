@@ -5,15 +5,14 @@ import type { Anime } from "@/lib/anilist";
 
 export function AnimeGrid({ anime }: { anime: Anime[] }) {
   return (
-    <div className="flex overflow-x-auto gap-4 pb-4 snap-x snap-mandatory">
+    <div className="flex gap-4">
       {anime.map((item) => (
         <Link 
           key={item.id} 
           href={`/anime/${item.id}`}
-          className="flex-none snap-start"
-          style={{ width: 'min(300px, 80vw)' }}
+          className="flex-none w-[200px] transition-transform hover:scale-[1.02]"
         >
-          <Card className="overflow-hidden transition-transform hover:scale-[1.02]">
+          <Card className="h-full overflow-hidden">
             <div className="aspect-[3/4] relative">
               <Image
                 src={item.coverImage.large}

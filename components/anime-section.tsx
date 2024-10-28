@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { AnimeGrid } from "@/components/anime-grid";
@@ -12,42 +12,46 @@ interface AnimeSectionProps {
 }
 
 export function AnimeSection({ title, anime }: AnimeSectionProps) {
-  const [page, setPage] = useState(0);
-  const itemsPerPage = 6;
-  const totalPages = Math.ceil(anime.length / itemsPerPage);
+  const [scrollPosition, setScrollPosition] = useState(0);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  const nextPage = () => setPage((prev) => (prev + 1) % totalPages);
-  const prevPage = () => setPage((prev) => (prev - 1 + totalPages) % totalPages);
-
-  const currentAnime = anime.slice(
-    page * itemsPerPage,
-    (page + 1) * itemsPerPage
-  );
+  const handleScroll = (direction: 'left' | 'right') => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+    
+    const scrollAmount = direction === 'left' ? -800 : 800;
+    container.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+  };
 
   return (
-    <section className="px-4 sm:px-6 flex-col items-center w-full max-w-7xl mx-auto">
-      <div className="mb-4 sm:mb-6 flex flex-col sm:flex-row items-center justify-between gap-4 sm:gap-0">
-        <h2 className="text-xl sm:text-2xl font-bold">{title}</h2>
+    <section className="w-full mx-auto relative group">
+      <div className="mb-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <h2 className="text-2xl sm:text-3xl font-bold">{title}</h2>
         <div className="flex gap-2">
           <Button
-            variant="ghost"
+            variant="outline"
             size="icon"
-            onClick={prevPage}
-            disabled={totalPages <= 1}
+            onClick={() => handleScroll('left')}
+            className="h-8 w-8 sm:h-10 sm:w-10"
           >
             <ChevronLeft className="h-4 w-4 sm:h-5 sm:w-5" />
           </Button>
           <Button
-            variant="ghost"
+            variant="outline"
             size="icon"
-            onClick={nextPage}
-            disabled={totalPages <= 1}
+            onClick={() => handleScroll('right')}
+            className="h-8 w-8 sm:h-10 sm:w-10"
           >
             <ChevronRight className="h-4 w-4 sm:h-5 sm:w-5" />
           </Button>
         </div>
       </div>
-      <AnimeGrid anime={currentAnime} />
+      <div 
+        ref={scrollContainerRef}
+        className="relative overflow-x-auto overflow-y-hidden"
+      >
+        <AnimeGrid anime={anime} />
+      </div>
     </section>
   );
 }

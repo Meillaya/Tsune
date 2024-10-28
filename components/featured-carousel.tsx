@@ -26,28 +26,14 @@ export function FeaturedCarousel({ items }: { items: Anime[] }) {
 
   useEffect(() => {
     if (!emblaApi) return;
-
     onSelect();
     emblaApi.on("select", onSelect);
     emblaApi.on("reInit", onSelect);
-
     return () => {
       emblaApi.off("select", onSelect);
       emblaApi.off("reInit", onSelect);
     };
   }, [emblaApi, onSelect]);
-
-  useEffect(() => {
-    if (emblaApi) {
-      const autoplay = setInterval(() => {
-        if (!nextBtnDisabled) {
-          emblaApi.scrollNext();
-        }
-      }, 5000);
-
-      return () => clearInterval(autoplay);
-    }
-  }, [emblaApi, nextBtnDisabled]);
 
   return (
     <div className="relative group">
@@ -56,7 +42,7 @@ export function FeaturedCarousel({ items }: { items: Anime[] }) {
           {items.map((anime) => (
             <div
               key={anime.id}
-              className="relative h-[70vh] min-w-full flex-[0_0_100%]"
+              className="relative min-h-[50vh] sm:min-h-[60vh] lg:min-h-[70vh] min-w-full flex-[0_0_100%]"
             >
               <div className="absolute inset-0">
                 <Image
@@ -68,23 +54,23 @@ export function FeaturedCarousel({ items }: { items: Anime[] }) {
                 />
               </div>
               <div className="absolute inset-0 bg-gradient-to-t from-background to-transparent" />
-              <div className="container relative flex h-full items-end pb-24">
-                <div className="max-w-2xl px-4">
-                  <h1 className="mb-4 text-4xl font-bold">
+              <div className="container relative flex h-full items-end pb-12 sm:pb-16 lg:pb-24">
+                <div className="max-w-3xl px-4 sm:px-6 lg:px-8">
+                  <h1 className="mb-2 sm:mb-4 text-2xl sm:text-3xl lg:text-4xl font-bold">
                     {anime.title.english || anime.title.romaji}
                   </h1>
-                  <p className="mb-6 line-clamp-3 text-lg text-muted-foreground">
+                  <p className="mb-4 sm:mb-6 line-clamp-2 sm:line-clamp-3 text-base sm:text-lg text-muted-foreground">
                     {anime.description?.replace(/<[^>]*>/g, "")}
                   </p>
-                  <div className="flex gap-4">
+                  <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
                     <Link href={`/anime/${anime.id}`}>
-                      <Button size="lg">
-                        <PlayCircle className="mr-2 h-5 w-5" />
+                      <Button size="lg" className="w-full sm:w-auto">
+                        <PlayCircle className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
                         Watch Now
                       </Button>
                     </Link>
-                    <Button size="lg" variant="secondary">
-                      <Plus className="mr-2 h-5 w-5" />
+                    <Button size="lg" variant="secondary" className="w-full sm:w-auto">
+                      <Plus className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
                       Add to Watchlist
                     </Button>
                   </div>
@@ -95,37 +81,37 @@ export function FeaturedCarousel({ items }: { items: Anime[] }) {
         </div>
       </div>
 
-      <div className="absolute left-4 right-4 top-1/2 flex -translate-y-1/2 justify-between">
+      <div className="absolute left-2 right-2 sm:left-4 sm:right-4 top-1/2 flex -translate-y-1/2 justify-between">
         <Button
           variant="ghost"
           size="icon"
-          className="h-12 w-12 rounded-full bg-background/50 opacity-0 transition-opacity group-hover:opacity-100"
+          className="h-8 w-8 sm:h-12 sm:w-12 rounded-full bg-background/50 opacity-0 transition-opacity group-hover:opacity-100"
           onClick={scrollPrev}
           disabled={prevBtnDisabled}
         >
-          <ChevronLeft className="h-6 w-6" />
+          <ChevronLeft className="h-4 w-4 sm:h-6 sm:w-6" />
         </Button>
         <Button
           variant="ghost"
           size="icon"
-          className="h-12 w-12 rounded-full bg-background/50 opacity-0 transition-opacity group-hover:opacity-100"
+          className="h-8 w-8 sm:h-12 sm:w-12 rounded-full bg-background/50 opacity-0 transition-opacity group-hover:opacity-100"
           onClick={scrollNext}
           disabled={nextBtnDisabled}
         >
-          <ChevronRight className="h-6 w-6" />
+          <ChevronRight className="h-4 w-4 sm:h-6 sm:w-6" />
         </Button>
       </div>
 
-      <div className="absolute bottom-8 left-1/2 flex -translate-x-1/2 gap-2">
+      <div className="absolute bottom-4 sm:bottom-8 left-1/2 flex -translate-x-1/2 gap-1.5 sm:gap-2">
         {items.map((_, index) => (
           <button
             key={index}
             onClick={() => emblaApi?.scrollTo(index)}
-            className={`h-2 w-2 rounded-full transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
+            className={`h-1.5 sm:h-2 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
               selectedIndex === index
-                ? "bg-primary w-8"
-                : "bg-primary/30 hover:bg-primary/50"
-            }`}
+                ? "bg-primary w-6 sm:w-8"
+                : "w-1.5 sm:w-2 bg-primary/30 hover:bg-primary/50"
+            } rounded-full`}
             aria-label={`Go to slide ${index + 1}`}
           />
         ))}

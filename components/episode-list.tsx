@@ -31,9 +31,10 @@ interface EpisodeListProps {
   episodes: number;
   animeId: number;
   coverImage: string;
+  bannerImage?: string;
 }
 
-export function EpisodeList({ episodes, animeId, coverImage }: EpisodeListProps) {
+export function EpisodeList({ episodes, animeId, coverImage, bannerImage }: EpisodeListProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const [episodeData, setEpisodeData] = useState<EpisodeMapping | null>(null);
   const episodesPerPage = 12;
@@ -87,6 +88,9 @@ export function EpisodeList({ episodes, animeId, coverImage }: EpisodeListProps)
       <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
         {currentEpisodes.map((episode) => {
           const episodeInfo = episodeData?.episodes[episode.toString()];
+          // Use episode image first, then banner image, then cover image, then fallback
+          const imageSource = episodeInfo?.image || bannerImage || coverImage || "/placeholder-episode.jpg";
+          
           return (
             <Card key={episode} className="overflow-hidden">
               <Link
@@ -94,15 +98,12 @@ export function EpisodeList({ episodes, animeId, coverImage }: EpisodeListProps)
                 className="group relative flex flex-col transition-colors hover:bg-muted/50"
               >
                 <div className="relative aspect-video w-full overflow-hidden">
-                <Image
-                    src={episodeInfo?.image || coverImage}
+                  <Image
+                    src={imageSource}
                     alt={`Episode ${episode}`}
                     fill
                     className="object-cover transition-transform group-hover:scale-105"
                     unoptimized
-                    onError={(e) => {
-                      e.currentTarget.src = coverImage;
-                    }}
                   />
                   <div className="absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 transition-opacity group-hover:opacity-100">
                     <PlayCircle className="h-12 w-12 text-white" />
@@ -118,7 +119,7 @@ export function EpisodeList({ episodes, animeId, coverImage }: EpisodeListProps)
                 </div>
               </Link>
             </Card>
-          )
+          );
         })}
       </div>
     </div>
