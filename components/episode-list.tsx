@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -13,13 +13,29 @@ import {
 } from "@/components/ui/select";
 import { PlayCircle } from "lucide-react";
 
+interface Episode {
+  title: {
+    en: string;
+  };
+  image: string;
+  runtime: number;
+}
+
+interface EpisodeMapping {
+  episodes: {
+    [key: string]: Episode;
+  };
+}
+
 interface EpisodeListProps {
   episodes: number;
   animeId: number;
+  coverImage: string;
 }
 
-export function EpisodeList({ episodes, animeId }: EpisodeListProps) {
+export function EpisodeList({ episodes, animeId, coverImage }: EpisodeListProps) {
   const [currentPage, setCurrentPage] = useState(1);
+  const [episodeData, setEpisodeData] = useState<EpisodeMapping | null>(null);
   const episodesPerPage = 12;
   const totalPages = Math.ceil(episodes / episodesPerPage);
   
@@ -30,6 +46,20 @@ export function EpisodeList({ episodes, animeId }: EpisodeListProps) {
     { length: endEpisode - startEpisode + 1 },
     (_, i) => startEpisode + i
   );
+
+  useEffect(() => {
+    const fetchEpisodeData = async () => {
+      try {
+        const response = await fetch(`https://api.ani.zip/mappings?anilist_id=${animeId}`);
+        const data = await response.json();
+        setEpisodeData(data);
+      } catch (error) {
+        console.error("Error fetching episode data:", error);
+      }
+    };
+
+    fetchEpisodeData();
+  }, [animeId]);
 
   return (
     <div className="space-y-4">
@@ -55,20 +85,41 @@ export function EpisodeList({ episodes, animeId }: EpisodeListProps) {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-        {currentEpisodes.map((episode) => (
-          <Card key={episode} className="overflow-hidden">
-            <Link
-              href={`/watch/${animeId}/${episode}`}
-              className="flex items-center gap-3 p-4 transition-colors hover:bg-muted/50"
-            >
-              <PlayCircle className="h-8 w-8 text-primary" />
-              <div>
-                <div className="font-medium">Episode {episode}</div>
-                <div className="text-sm text-muted-foreground">24m</div>
-              </div>
-            </Link>
-          </Card>
-        ))}
+        {currentEpisodes.map((episode) => {
+          const episodeInfo = episodeData?.episodes[episode.toString()];
+          return (
+            <Card key={episode} className="overflow-hidden">
+              <Link
+                href={`/watch/${animeId}/${episode}`}
+                className="group relative flex flex-col transition-colors hover:bg-muted/50"
+              >
+                <div className="relative aspect-video w-full overflow-hidden">
+                <Image
+                    src={episodeInfo?.image || coverImage}
+                    alt={`Episode ${episode}`}
+                    fill
+                    className="object-cover transition-transform group-hover:scale-105"
+                    unoptimized
+                    onError={(e) => {
+                      e.currentTarget.src = coverImage;
+                    }}
+                  />
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 transition-opacity group-hover:opacity-100">
+                    <PlayCircle className="h-12 w-12 text-white" />
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 p-4">
+                  <div>
+                    <div className="font-medium">Episode {episode}</div>
+                    <div className="text-sm text-muted-foreground">
+                      {episodeInfo?.title?.en || `${episodeInfo?.runtime || 24}m`}
+                    </div>
+                  </div>
+                </div>
+              </Link>
+            </Card>
+          )
+        })}
       </div>
     </div>
   );

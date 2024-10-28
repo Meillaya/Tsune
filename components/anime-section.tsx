@@ -25,9 +25,9 @@ export function AnimeSection({ title, anime }: AnimeSectionProps) {
   );
 
   return (
-    <section className="px-4 flex-col items-center">
-      <div className="mb-6 flex items-center justify-between">
-        <h2 className="text-2xl font-bold">{title}</h2>
+    <section className="px-4 sm:px-6 flex-col items-center w-full max-w-7xl mx-auto">
+      <div className="mb-4 sm:mb-6 flex flex-col sm:flex-row items-center justify-between gap-4 sm:gap-0">
+        <h2 className="text-xl sm:text-2xl font-bold">{title}</h2>
         <div className="flex gap-2">
           <Button
             variant="ghost"
@@ -35,7 +35,7 @@ export function AnimeSection({ title, anime }: AnimeSectionProps) {
             onClick={prevPage}
             disabled={totalPages <= 1}
           >
-            <ChevronLeft className="h-5 w-5" />
+            <ChevronLeft className="h-4 w-4 sm:h-5 sm:w-5" />
           </Button>
           <Button
             variant="ghost"
@@ -43,7 +43,7 @@ export function AnimeSection({ title, anime }: AnimeSectionProps) {
             onClick={nextPage}
             disabled={totalPages <= 1}
           >
-            <ChevronRight className="h-5 w-5" />
+            <ChevronRight className="h-4 w-4 sm:h-5 sm:w-5" />
           </Button>
         </div>
       </div>

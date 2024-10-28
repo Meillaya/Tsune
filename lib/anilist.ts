@@ -50,7 +50,7 @@ const fetchAnimeData = async (query: string, variables = {}) => {
 export async function getTrendingAnime(): Promise<Anime[]> {
   const query = `
     query {
-      Page(page: 1, perPage: 12) {
+      Page(page: 1, perPage: 16) {
         media(type: ANIME, sort: TRENDING_DESC) {
           id
           title {
@@ -195,6 +195,11 @@ export async function getAnimeById(id: number): Promise<Anime | null> {
         seasonYear
         format
         duration
+        streamingEpisodes {
+          thumbnail
+          title
+          url
+        }
         studios {
           nodes {
             id
@@ -209,6 +214,7 @@ export async function getAnimeById(id: number): Promise<Anime | null> {
   return data?.Media || null;
 }
 
+
 export async function getAllAnimeIds(): Promise<number[]> {
   const [trending, popular, upcoming, topRated] = await Promise.all([
     getTrendingAnime(),
@@ -218,5 +224,5 @@ export async function getAllAnimeIds(): Promise<number[]> {
   ]);
 
   const allAnime = [...trending, ...popular, ...upcoming, ...topRated];
-  return [...new Set(allAnime.map(anime => anime.id))];
+  return Array.from(new Set(allAnime.map(anime => anime.id)));
 }

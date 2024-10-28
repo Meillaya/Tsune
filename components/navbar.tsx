@@ -4,11 +4,10 @@ import { useState } from "react";
 import Link from "next/link";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { SearchCommand } from "@/components/search-command";
 import {
   Moon,
   Sun,
-  Search,
   Menu,
   X,
   PlayCircle,
@@ -19,7 +18,6 @@ import {
 export function Navbar() {
   const { theme, setTheme } = useTheme();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
@@ -65,17 +63,7 @@ export function Navbar() {
         </Button>
 
         <div className="flex flex-1 items-center justify-end space-x-2">
-          <div className="w-full max-w-[300px]">
-            <form className="relative">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search anime..."
-                className="pl-8"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </form>
-          </div>
+          <SearchCommand />
           <Button
             variant="ghost"
             size="icon"

@@ -57,3 +57,9 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer components {
+  .container {
+    @apply px-4 md:px-8 lg:px-16;
+  }
+}

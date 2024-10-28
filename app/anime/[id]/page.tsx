@@ -30,7 +30,7 @@ export default async function AnimePage({
       </Suspense>
       <div className="container py-8">
         <Suspense fallback={<LoadingSpinner />}>
-          <EpisodeList episodes={anime.episodes} animeId={anime.id} />
+          <EpisodeList episodes={anime.episodes} animeId={anime.id} coverImage={""} />
         </Suspense>
       </div>
     </div>

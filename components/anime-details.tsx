@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { PlayCircle, Plus, Star } from "lucide-react";
 import type { Anime } from "@/lib/anilist";
 
+
 export function AnimeDetails({ anime }: { anime: Anime }) {
   return (
     <div>
@@ -79,7 +80,7 @@ export function AnimeDetails({ anime }: { anime: Anime }) {
                   <p className="text-sm">{`${anime.season} ${anime.seasonYear}`}</p>
                 </div>
               )}
-              {anime.studios?.nodes.length > 0 && (
+              {anime.studios?.nodes && anime.studios.nodes.length > 0 && (
                 <div>
                   <h4 className="text-sm font-medium text-muted-foreground">Studio</h4>
                   <p className="text-sm">{anime.studios.nodes[0].name}</p>
