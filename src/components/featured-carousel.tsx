@@ -29,9 +29,15 @@ export function FeaturedCarousel({ items }: { items: Anime[] }) {
     onSelect();
     emblaApi.on("select", onSelect);
     emblaApi.on("reInit", onSelect);
+
+    const autoplayInterval = setInterval(() => {
+      emblaApi.scrollNext();
+    }, 5000);
+
     return () => {
       emblaApi.off("select", onSelect);
       emblaApi.off("reInit", onSelect);
+      clearInterval(autoplayInterval);
     };
   }, [emblaApi, onSelect]);
 
