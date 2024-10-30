@@ -15,6 +15,7 @@ export type AnimeData = {
 }
 
 export type ListAnimeData = {
+  [x: string]: any
   id: number | null
   mediaId: number | null
   progress?: number | null

@@ -1,8 +1,8 @@
 import { History, AnimeHistoryEntry, EpisodeHistoryEntry, HistoryEntries } from "../types/historyTypes";
 
-var history = (localStorage.get('history') || { entries: {} }) as History;
-/**
- * Get the history entry for the anime's id.
+let history: History = (typeof localStorage !== 'undefined' && localStorage.getItem('history')) ? JSON.parse(localStorage.getItem('history') || '{}') : { entries: {} };
+
+/** * Get the history entry for the anime's id.
  *
  * @param animeId
  * @returns anime history
@@ -46,8 +46,8 @@ export const getEpisodeHistory = (
 export const setHistory = (
   newHistory: History
 ) => {
-  history = history;
-  localStorage.set('history', newHistory);
+  history = newHistory;
+  localStorage.setItem('history', JSON.stringify(newHistory));
 }
 
 /**
@@ -63,9 +63,8 @@ export const setAnimeHistory = (
 
   history.entries[animeId] = animeHistory;
 
-  localStorage.set('history', history);
+  localStorage.setItem('history', JSON.stringify(history));
 }
-
 /**
  * Get the last watched episode from an anime.
  *

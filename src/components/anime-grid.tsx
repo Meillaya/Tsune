@@ -1,9 +1,9 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Card, CardContent } from "@/components/ui/card";
-import type { Anime } from "@/lib/anilist";
+import { Media } from "@/types/anilistGraphQLTypes";
 
-export function AnimeGrid({ anime }: { anime: Anime[] }) {
+export function AnimeGrid({ anime }: { anime: Media[] }) {
   return (
     <div className="flex gap-4">
       {anime.map((item) => (
@@ -15,15 +15,15 @@ export function AnimeGrid({ anime }: { anime: Anime[] }) {
           <Card className="h-full overflow-hidden">
             <div className="aspect-[3/4] relative">
               <Image
-                src={item.coverImage.large}
-                alt={item.title.english || item.title.romaji}
+                src={item.coverImage?.large || ''}
+                alt={item.title?.english || item.title?.romaji || ""}
                 fill
                 className="object-cover"
               />
             </div>
             <CardContent className="p-4">
               <h2 className="font-semibold line-clamp-1">
-                {item.title.english || item.title.romaji}
+                {item.title?.english || item.title?.romaji}
               </h2>
               <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
                 {item.description?.replace(/<[^>]*>/g, "")}
@@ -31,7 +31,6 @@ export function AnimeGrid({ anime }: { anime: Anime[] }) {
             </CardContent>
           </Card>
         </Link>
-      ))}
-    </div>
+      ))}    </div>
   );
 }

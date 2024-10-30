@@ -3,7 +3,7 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import { ThemeProvider } from '@/components/theme-provider';
 import { Navbar } from '@/components/navbar';
-
+import { HistoryProvider } from "@/context/HistoryContext";
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
@@ -19,6 +19,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
+      <HistoryProvider>
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"
@@ -30,6 +31,7 @@ export default function RootLayout({
             <main className="flex-1">{children}</main>
           </div>
         </ThemeProvider>
+        </HistoryProvider>
       </body>
     </html>
   );

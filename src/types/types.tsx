@@ -10,6 +10,19 @@ export type EpisodeInfo = {
     episode?: string
   };
   
+  interface EpisodeHistoryEntry {
+    timestamp: number;
+    time: number;
+    data: {
+      progress: number;
+    }
+  }
+  
+  export type EpisodeHistoryEntries = {
+    [key: number]: EpisodeHistoryEntry;
+  }
+  
+  
   export type ClientData = {
     clientId: number;
     redirectUri: string;

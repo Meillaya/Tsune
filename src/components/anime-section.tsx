@@ -4,11 +4,11 @@ import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { AnimeGrid } from "@/components/anime-grid";
-import type { Anime } from "@/lib/anilist";
+import { Media } from "@/types/anilistGraphQLTypes";
 
 interface AnimeSectionProps {
   title: string;
-  anime: Anime[];
+  anime: Media[];
 }
 
 export function AnimeSection({ title, anime }: AnimeSectionProps) {

@@ -6,14 +6,17 @@ import Link from "next/link";
 import useEmblaCarousel from "embla-carousel-react";
 import { Button } from "@/components/ui/button";
 import { PlayCircle, Plus, ChevronLeft, ChevronRight } from "lucide-react";
-import type { Anime } from "@/lib/anilist";
+import { Media } from "@/types/anilistGraphQLTypes";
+import { updateAnimeFromList } from "@/modules/anilist/anilistsAPI";
 
-export function FeaturedCarousel({ items }: { items: Anime[] }) {
+// Update the props type to use Media from GraphQL types
+export function FeaturedCarousel({ items }: { items: Media[] }) {
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true });
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [prevBtnDisabled, setPrevBtnDisabled] = useState(true);
   const [nextBtnDisabled, setNextBtnDisabled] = useState(true);
 
+  // Carousel logic remains the same
   const scrollPrev = useCallback(() => emblaApi?.scrollPrev(), [emblaApi]);
   const scrollNext = useCallback(() => emblaApi?.scrollNext(), [emblaApi]);
 
@@ -23,6 +26,11 @@ export function FeaturedCarousel({ items }: { items: Anime[] }) {
     setPrevBtnDisabled(!emblaApi.canScrollPrev());
     setNextBtnDisabled(!emblaApi.canScrollNext());
   }, [emblaApi]);
+
+  // Add watchlist handler
+  const handleAddToWatchlist = async (mediaId: number) => {
+    await updateAnimeFromList(mediaId, "PLANNING");
+  };
 
   useEffect(() => {
     if (!emblaApi) return;
@@ -52,8 +60,8 @@ export function FeaturedCarousel({ items }: { items: Anime[] }) {
             >
               <div className="absolute inset-0">
                 <Image
-                  src={anime.bannerImage || anime.coverImage.large}
-                  alt={anime.title.english || anime.title.romaji}
+                  src={anime.bannerImage || anime.coverImage?.large || ""}
+                  alt={anime.title?.english || anime.title?.romaji || ""}
                   fill
                   className="object-cover brightness-50"
                   priority
@@ -63,7 +71,7 @@ export function FeaturedCarousel({ items }: { items: Anime[] }) {
               <div className="container relative flex h-full items-end pb-12 sm:pb-16 lg:pb-24">
                 <div className="max-w-3xl px-4 sm:px-6 lg:px-8">
                   <h1 className="mb-2 sm:mb-4 text-2xl sm:text-3xl lg:text-4xl font-bold">
-                    {anime.title.english || anime.title.romaji}
+                    {anime.title?.english || anime.title?.romaji}
                   </h1>
                   <p className="mb-4 sm:mb-6 line-clamp-2 sm:line-clamp-3 text-base sm:text-lg text-muted-foreground">
                     {anime.description?.replace(/<[^>]*>/g, "")}
@@ -75,7 +83,12 @@ export function FeaturedCarousel({ items }: { items: Anime[] }) {
                         Watch Now
                       </Button>
                     </Link>
-                    <Button size="lg" variant="secondary" className="w-full sm:w-auto">
+                    <Button 
+                      size="lg" 
+                      variant="secondary" 
+                      className="w-full sm:w-auto"
+                      onClick={() => anime.id !== undefined && handleAddToWatchlist(anime.id)}
+                    >
                       <Plus className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
                       Add to Watchlist
                     </Button>
@@ -83,8 +96,7 @@ export function FeaturedCarousel({ items }: { items: Anime[] }) {
                 </div>
               </div>
             </div>
-          ))}
-        </div>
+          ))}        </div>
       </div>
 
       <div className="absolute left-2 right-2 sm:left-4 sm:right-4 top-1/2 flex -translate-y-1/2 justify-between">
