@@ -1,40 +1,29 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { AnimeSection } from './anime-section';
-import type { Media } from '@/types/anilistGraphQLTypes';
-import type { ListAnimeData } from '@/types/anilistAPITypes';
 import { LoadingSpinner } from './loading-spinner';
+import { useLists } from '@/context/ListsContext';
+import { ListAnimeData } from '@/types/anilistAPITypes';
 
 export function ContinueWatchingSection() {
-  const [currentlyWatching, setCurrentlyWatching] = useState<Media[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { currentLists, isListsLoading } = useLists();
 
-  useEffect(() => {
-    // Fetch the anime lists from localStorage
-    const animeLists = localStorage.getItem('anime_lists');
-    if (animeLists) {
-      const lists: ListAnimeData[] = JSON.parse(animeLists);
-
-      // Filter to get anime that are currently being watched
-      const watching = lists
-        .map((item) => item.media)
-        .filter((media): media is Media => !!media); // Ensure media is not undefined
-
-      setCurrentlyWatching(watching);
-    }
-    setIsLoading(false);
-  }, []);
-
-  if (isLoading) {
+  if (isListsLoading) {
     return <LoadingSpinner />;
   }
-
-  if (currentlyWatching.length === 0) {
-    return null; // Don't render anything if there are no anime to display
+  console.log(currentLists)
+  if (!currentLists || currentLists.length === 0) {
+    return null;
   }
 
   return (
-    <AnimeSection title="Continue Watching" anime={currentlyWatching} />
+    <div className="section-container">
+      <AnimeSection 
+        title="Continue Watching" 
+        animeData={[]}
+        anime={currentLists.map(item => item.media)} 
+      />
+    </div>
   );
 }

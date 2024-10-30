@@ -4,6 +4,7 @@ import { Inter } from 'next/font/google';
 import { ThemeProvider } from '@/components/theme-provider';
 import { Navbar } from '@/components/navbar';
 import { HistoryProvider } from "@/context/HistoryContext";
+import { ListsProvider, useLists } from '@/context/ListsContext';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
@@ -19,6 +20,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
+    <ListsProvider>
       <HistoryProvider>
         <ThemeProvider
           attribute="class"
@@ -32,6 +34,7 @@ export default function RootLayout({
           </div>
         </ThemeProvider>
         </HistoryProvider>
+        </ListsProvider>
       </body>
     </html>
   );

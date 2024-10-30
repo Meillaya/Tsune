@@ -7,7 +7,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SearchCommand } from "@/components/search-command";
 import { clientData } from "@/modules/clientData";
-import { getViewerInfo, getViewerId, getViewerLists, getAccessToken, getViewerList } from "@/modules/anilist/anilistsAPI";
+import { 
+  getViewerInfo,
+  getViewerId,
+  getViewerLists,
+  getAccessToken,
+  getViewerList,
+  getAnimeInfo
+} from "@/modules/anilist/anilistsAPI";
 import {
   getAnimeHistory,
   getHistoryEntries,
@@ -40,6 +47,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { AnimeHistoryEntry } from "@/types/historyTypes";
+import { useLists } from '@/context/ListsContext';
 
 interface UserData {
   id: number;
@@ -58,7 +66,50 @@ export function Navbar() {
   const { theme, setTheme } = useTheme();
   const [viewerId, setViewerId] = useState<number | null>(null);
   const [currentListAnime, setCurrentListAnime] = useState<ListAnimeData[]>([]);
-const [planningListAnime, setPlanningListAnime] = useState<ListAnimeData[]>([]);
+  const [planningListAnime, setPlanningListAnime] = useState<ListAnimeData[]>([]);
+  const [recommendedAnime, setRecommendedAnime] = useState<ListAnimeData[]>();
+  const entries = getHistoryEntries();
+  const historyAvailable = Object.values(entries).length > 0;
+  let result: ListAnimeData[] = [];
+  const { setCurrentLists, setIsListsLoading } = useLists();
+  
+  const sortNewest = (a: ListAnimeData, b: ListAnimeData) =>
+    (getLastWatchedEpisode(
+      (b.media.id ??
+        (b.media.mediaListEntry && b.media.mediaListEntry.id)) as number,
+    )?.timestamp ?? 0) -
+    (getLastWatchedEpisode(
+      (a.media.id ??
+        (a.media.mediaListEntry && a.media.mediaListEntry.id)) as number,
+    )?.timestamp ?? 0);
+
+    const updateRecommended = async (history: ListAnimeData[]) => {
+      const animeData = history[Math.floor(Math.random() * (history.length - 1))];
+  
+      if (animeData.media.recommendations === undefined) {
+        animeData.media = await getAnimeInfo(animeData.media.id);
+        const entry = getAnimeHistory(animeData.media.id as number);
+        if (entry) {
+          entry.data = animeData;
+          setAnimeHistory(entry);
+        }
+      }
+  
+      const recommendedList = animeData.media.recommendations?.nodes.map(
+        (value) => {
+          return {
+            id: null,
+            mediaId: null,
+            progress: null,
+            media: value.mediaRecommendation,
+          } as ListAnimeData;
+        },
+      );
+  
+      recommendedList?.push(animeData);
+  
+      setRecommendedAnime(recommendedList);
+    };
 
 const handleTokenSubmit = async () => {
   try {
@@ -71,37 +122,21 @@ const handleTokenSubmit = async () => {
     const userData = await getViewerInfo(id);
     setUser(userData);
 
-    // Fetch both current and planning lists
-    const currentList = await getViewerList(id, "CURRENT");
-    const planningList = await getViewerList(id, "PLANNING");
-   // Update state
-    setCurrentListAnime(currentList);
-    setPlanningListAnime(planningList);
+    
+    result = await getViewerLists(id, 'CURRENT', 'REPEATING', 'PAUSED');
+    const planningListAnime = await getViewerList(id, "PLANNING");
+   
+    setCurrentListAnime(result);
+    setPlanningListAnime(planningListAnime);
 
-    // Store trimmed versions in localStorage
-    const trimmedLists = [...planningList].map(item => ({
-      id: item.id,
-      mediaId: item.mediaId,
-      progress: item.progress,
-      media: {
-        id: item.media.id,
-        title: item.media.title,
-        coverImage: item.media.coverImage,
-        episodes: item.media.episodes,
-        mediaListEntry: {
-          progress: item.mediaListEntry?.progress
-        }
-      }
-    }));
-
-  trimmedLists.sort((a, b) => {
-    const aProgress = a.media.mediaListEntry?.progress || 0;
-    const bProgress = b.media.mediaListEntry?.progress || 0;
-    return bProgress - aProgress;
-  });
-
-    localStorage.setItem("anime_lists", JSON.stringify(trimmedLists));
-    setIsDialogOpen(false);
+    result = Object.values(entries)
+    .map((value) => value.data)
+    .sort(sortNewest);
+    
+    
+    localStorage.setItem("anime_lists", JSON.stringify(result));
+    setCurrentLists(result);
+    setIsListsLoading(false);
   } catch (error) {
     console.error('Login error:', error);
     localStorage.removeItem('access_token');
@@ -109,43 +144,42 @@ const handleTokenSubmit = async () => {
 };
 
 useEffect(() => {
-  async function loadPersistedUserData() {
-    const accessToken = localStorage.getItem('access_token');
-    const viewerId = localStorage.getItem('viewer_id');
-    
-    if (accessToken && viewerId) {
-      try {
-        const userData = await getViewerInfo(parseInt(viewerId));
-        setUser(userData);
-        
-        const currentList = await getViewerList(parseInt(viewerId), "CURRENT");
-        const planningList = await getViewerList(parseInt(viewerId), "PLANNING");
-        
-        setCurrentListAnime(currentList);
-        setPlanningListAnime(planningList);
-        
-        const trimmedLists = [...currentList, ...planningList].map(item => ({
-          id: item.id,
-          mediaId: item.mediaId,
-          progress: item.progress,
-          media: {
-            id: item.media.id,
-            title: item.media.title,
-            coverImage: item.media.coverImage,
-            episodes: item.media.episodes
-          }
-        }));
-        
-        localStorage.setItem("anime_lists", JSON.stringify(trimmedLists));
-      } catch (error) {
-        console.error('Failed to load persisted user data:', error);
-        handleLogout();
-      }
-    }
-  }
-  
-  loadPersistedUserData();
-}, []);
+
+
+    async function loadPersistedUserData() {
+      setIsListsLoading(true);
+      const accessToken = localStorage.getItem('access_token');
+      const viewerId = localStorage.getItem('viewer_id');
+     
+      if (accessToken && viewerId) {
+        try {
+          const userData = await getViewerInfo(parseInt(viewerId));
+          setUser(userData);
+         
+          let currentList = await getViewerLists(parseInt(viewerId), 'CURRENT', 'REPEATING', 'PAUSED');
+  //         const planningList = await getViewerList(parseInt(viewerId), "PLANNING");
+          console.log(currentList);
+          setCurrentListAnime(currentList);
+  //         setPlanningListAnime(planningList);
+
+  //         currentList = Object.values(entries)
+  //         .map((value) => value.data)
+  //         .sort(sortNewest);
+
+      
+          localStorage.setItem("anime_lists", JSON.stringify(currentList));
+          setCurrentLists(currentList);
+          console.log("Global Lists Data:", currentList);
+        } catch (error) {
+          console.error('Failed to load persisted user data:', error);
+          handleLogout();
+        }
+      }
+    setIsListsLoading(false);
+    }  
+    loadPersistedUserData();
+  }, [entries, setCurrentLists, setIsListsLoading]);
+
 
 
   const handleLogout = () => {

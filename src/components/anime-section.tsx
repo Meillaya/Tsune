@@ -5,10 +5,13 @@ import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { AnimeGrid } from "@/components/anime-grid";
 import { Media } from "@/types/anilistGraphQLTypes";
-
+import { ListAnimeData } from '../types/anilistAPITypes';
+import { ListsProvider, useLists } from '@/context/ListsContext';
 interface AnimeSectionProps {
   title: string;
   anime: Media[];
+  animeData: (lists: ListAnimeData[]) => void;
+  
 }
 
 export function AnimeSection({ title, anime }: AnimeSectionProps) {
@@ -24,6 +27,7 @@ export function AnimeSection({ title, anime }: AnimeSectionProps) {
   };
 
   return (
+    <ListsProvider>
     <section className="w-full mx-auto relative group">
       <div className="mb-6 flex flex-col sm:flex-row items-center justify-between gap-4">
         <h2 className="text-2xl sm:text-3xl font-bold">{title}</h2>
@@ -53,5 +57,6 @@ export function AnimeSection({ title, anime }: AnimeSectionProps) {
         <AnimeGrid anime={anime} />
       </div>
     </section>
+    </ListsProvider>
   );
 }

@@ -594,7 +594,7 @@ export const getAiredAnime = async (
 
   pageData.airingSchedules = pageData.airingSchedules.reverse();
 
-  const adultContent = localStorage.getItem('adult_content') as boolean;
+  const adultContent = localStorage.getItem('adult_content') as unknown as boolean;
   if (!adultContent)
     pageData.airingSchedules = pageData.airingSchedules.filter((value) => filterAdultMedia(value.media));
 
@@ -646,7 +646,7 @@ export const getAiringSchedule = async (
   const respData = await makeRequest(METHOD, GRAPH_QL_URL, headers, options);
   const pageData = respData.data.Page as AiringPage;
 
-  const adultContent = localStorage.getItem('adult_content') as boolean;
+  const adultContent = localStorage.getItem('adult_content') as unknown as boolean;
   if (!adultContent)
     pageData.airingSchedules = pageData.airingSchedules.filter((value) => filterAdultMedia(value.media));
 

@@ -15,9 +15,10 @@ export async function generateStaticParams() {
 export default async function AnimePage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }> | { id: string };
 }) {
-  const anime = await getAnimeById(parseInt(params.id));
+  const resolvedParams = await params;
+  const anime = await getAnimeById(parseInt(resolvedParams.id));
 
   if (!anime) {
     notFound();
