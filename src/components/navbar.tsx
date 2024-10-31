@@ -1,27 +1,13 @@
 "use client";
-import { useState, useEffect } from "react";
+
+import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { SearchCommand } from "@/components/search-command";
-import { clientData } from "@/modules/clientData";
-import { 
-  getViewerInfo,
-  getViewerId,
-  getViewerLists,
-  getAccessToken,
-  getViewerList,
-  getAnimeInfo
-} from "@/modules/anilist/anilistsAPI";
-import {
-  getAnimeHistory,
-  getHistoryEntries,
-  getLastWatchedEpisode,
-  setAnimeHistory,
-} from '../modules/history';
-import type { ListAnimeData, UserInfo } from '@/types/anilistAPITypes';
+import { LoginDialog } from "@/components/auth/login-dialog";
+import { useAuth } from "@/hooks/useAuth";
 import {
   Moon,
   Sun,
@@ -33,162 +19,17 @@ import {
 } from "lucide-react";
 
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { AnimeHistoryEntry } from "@/types/historyTypes";
-import { useLists } from '@/context/ListsContext';
-
-interface UserData {
-  id: number;
-  name: string;
-  avatar?: {
-    medium?: string;
-  };
-}
 
 export function Navbar() {
-  const [user, setUser] = useState<UserData | null>(null);
-  const [token, setToken] = useState("");
+  const { theme, setTheme } = useTheme();
+  const { isAuthenticated, user, isLoading, error, login, logout } = useAuth();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const authUrl = `https://anilist.co/api/v2/oauth/authorize?client_id=${clientData.clientId}&redirect_uri=${clientData.redirectUri}&response_type=code`;
-  const { theme, setTheme } = useTheme();
-  const [viewerId, setViewerId] = useState<number | null>(null);
-  const [currentListAnime, setCurrentListAnime] = useState<ListAnimeData[]>([]);
-  const [planningListAnime, setPlanningListAnime] = useState<ListAnimeData[]>([]);
-  const [recommendedAnime, setRecommendedAnime] = useState<ListAnimeData[]>();
-  const entries = getHistoryEntries();
-  const historyAvailable = Object.values(entries).length > 0;
-  let result: ListAnimeData[] = [];
-  const { setCurrentLists, setIsListsLoading } = useLists();
-  
-  const sortNewest = (a: ListAnimeData, b: ListAnimeData) =>
-    (getLastWatchedEpisode(
-      (b.media.id ??
-        (b.media.mediaListEntry && b.media.mediaListEntry.id)) as number,
-    )?.timestamp ?? 0) -
-    (getLastWatchedEpisode(
-      (a.media.id ??
-        (a.media.mediaListEntry && a.media.mediaListEntry.id)) as number,
-    )?.timestamp ?? 0);
-
-    const updateRecommended = async (history: ListAnimeData[]) => {
-      const animeData = history[Math.floor(Math.random() * (history.length - 1))];
-  
-      if (animeData.media.recommendations === undefined) {
-        animeData.media = await getAnimeInfo(animeData.media.id);
-        const entry = getAnimeHistory(animeData.media.id as number);
-        if (entry) {
-          entry.data = animeData;
-          setAnimeHistory(entry);
-        }
-      }
-  
-      const recommendedList = animeData.media.recommendations?.nodes.map(
-        (value) => {
-          return {
-            id: null,
-            mediaId: null,
-            progress: null,
-            media: value.mediaRecommendation,
-          } as ListAnimeData;
-        },
-      );
-  
-      recommendedList?.push(animeData);
-  
-      setRecommendedAnime(recommendedList);
-    };
-
-const handleTokenSubmit = async () => {
-  try {
-    const accessToken = await getAccessToken(token);
-    if (typeof window !== 'undefined') {
-      sessionStorage.setItem('access_token', accessToken);
-    }
-    
-    const id = await getViewerId();
-    if (typeof window !== 'undefined') {
-      sessionStorage.setItem('viewer_id', id.toString());
-    }
-    
-    const userData = await getViewerInfo(id);
-    setUser(userData);
-
-    result = await getViewerLists(id, 'CURRENT', 'REPEATING', 'PAUSED');
-    const planningListAnime = await getViewerList(id, "PLANNING");
-   
-    setCurrentListAnime(result);
-    setPlanningListAnime(planningListAnime);
-
-    result = Object.values(entries)
-    .map((value) => value.data)
-    .sort(sortNewest);
-    
-    if (typeof window !== 'undefined') {
-      sessionStorage.setItem("anime_lists", JSON.stringify(result));
-    }
-    setCurrentLists(result);
-    setIsListsLoading(false);
-  } catch (error) {
-    console.error('Login error:', error);
-    if (typeof window !== 'undefined') {
-      sessionStorage.removeItem('access_token');
-    }
-  }
-};
-
-useEffect(() => {
-    async function loadPersistedUserData() {
-      setIsListsLoading(true);
-      const accessToken = typeof window !== 'undefined' ? sessionStorage.getItem('access_token') : null;
-      const viewerId = typeof window !== 'undefined' ? sessionStorage.getItem('viewer_id') : null;
-     
-      if (accessToken && viewerId) {
-        try {
-          const userData = await getViewerInfo(parseInt(viewerId));
-          setUser(userData);
-         
-          let currentList = await getViewerLists(parseInt(viewerId), 'CURRENT', 'REPEATING', 'PAUSED');
-          console.log(currentList);
-          setCurrentListAnime(currentList);
-
-          if (typeof window !== 'undefined') {
-            sessionStorage.setItem("anime_lists", JSON.stringify(currentList));
-          }
-          setCurrentLists(currentList);
-          console.log("Global Lists Data:", currentList);
-        } catch (error) {
-          console.error('Failed to load persisted user data:', error);
-          handleLogout();
-        }
-      }
-    setIsListsLoading(false);
-    }  
-    loadPersistedUserData();
-  }, [entries, setCurrentLists, setIsListsLoading]);
-
-  const handleLogout = () => {
-    if (typeof window !== 'undefined') {
-      sessionStorage.removeItem("access_token");
-      sessionStorage.removeItem("viewer_id");
-      sessionStorage.removeItem("anime_lists");
-    }
-    setUser(null);
-  };
-
-  const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
   const navLinks = [
     { href: "/", label: "Home", icon: PlayCircle },
@@ -204,7 +45,7 @@ useEffect(() => {
             variant="ghost"
             size="icon"
             className="md:hidden"
-            onClick={toggleMenu}
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
           >
             {isMenuOpen ? (
               <X className="h-5 w-5" />
@@ -245,7 +86,7 @@ useEffect(() => {
             <span className="sr-only">Toggle theme</span>
           </Button>
 
-          {user ? (
+          {isAuthenticated && user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-9 w-9 rounded-full">
@@ -258,36 +99,19 @@ useEffect(() => {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={handleLogout}>
+                <DropdownMenuItem onClick={logout}>
                   Log out
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-              <DialogTrigger asChild>
-                <Button 
-                  variant="outline" 
-                  onClick={() => window.open(authUrl, '_blank')}
-                  className="ml-2"
-                >
-                  Login with AniList
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Enter Your AniList Token</DialogTitle>
-                </DialogHeader>
-                <div className="grid gap-4 py-4">
-                  <Input
-                    placeholder="Paste your token here..."
-                    value={token}
-                    onChange={(e) => setToken(e.target.value)}
-                  />
-                  <Button onClick={handleTokenSubmit}>Submit</Button>
-                </div>
-              </DialogContent>
-            </Dialog>
+            <Button 
+              variant="outline"
+              onClick={() => setIsDialogOpen(true)}
+              className="ml-2"
+            >
+              Login with AniList
+            </Button>
           )}
         </div>
       </nav>
@@ -309,6 +133,14 @@ useEffect(() => {
           </div>
         </div>
       )}
+
+      <LoginDialog
+        isOpen={isDialogOpen}
+        onOpenChange={setIsDialogOpen}
+        onLogin={login}
+        isLoading={isLoading}
+        error={error}
+      />
     </header>
   );
 }

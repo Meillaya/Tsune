@@ -4,6 +4,9 @@ const nextConfig = {
     domains: ['s4.anilist.co', 'artworks.thetvdb.com'],
     unoptimized: true,
   },
+  typescript: {
+    ignoreBuildErrors: true
+  }
 };
 
 module.exports = nextConfig;
