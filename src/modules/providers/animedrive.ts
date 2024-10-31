@@ -1,7 +1,26 @@
 import { IVideo } from '@consumet/extensions';
 import AnimeDrive from '@consumet/extensions/dist/providers/anime/animedrive';
 import ProviderCache from './cache';
+import { NextApiRequest, NextApiResponse } from 'next';
 
+
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  const { type, query } = req.query
+
+  switch(type) {
+    case 'search':
+      const results = await consumet.search(query as string)
+      return res.status(200).json(results)
+    
+    case 'info':
+      const info = await consumet.fetchAnimeInfo(query as string)
+      return res.status(200).json(info)
+    
+    case 'sources':
+      const sources = await consumet.fetchEpisodeSources(query as string)
+      return res.status(200).json(sources)
+  }
+}
 const cache = new ProviderCache();
 const consumet = new AnimeDrive();
 

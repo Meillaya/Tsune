@@ -8,6 +8,14 @@ import { getEpisodeUrl as gogoanime } from './gogoanime';
 import { getEpisodeUrl as hianime } from './hianime';
 import { getEpisodeUrl as aniwatch } from './aniwatch';
 
+
+const API_BASE = '/api/anime'
+
+export const fetchFromProvider = async (provider: string, type: string, query: string) => {
+  const response = await fetch(`${API_BASE}/${provider}?type=${type}&query=${encodeURIComponent(query)}`)
+  return response.json()
+}
+
 export const getUniversalEpisodeUrl = async (
   listAnimeData: ListAnimeData,
   episode: number,

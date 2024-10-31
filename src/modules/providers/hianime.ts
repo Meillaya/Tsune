@@ -7,6 +7,25 @@ const CORS_PROXY = "https://cors-anywhere.herokuapp.com/";
 const cache = new ProviderCache();
 const consumet = new Zoro();
 const apiUrl = 'https://aniwatch-api-ch0nker.vercel.app'
+import { NextApiRequest, NextApiResponse } from 'next';
+
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  const { type, query, episode } = req.query
+
+  switch(type) {
+    case 'search':
+      const results = await consumet.search(query as string)
+      return res.status(200).json(results)
+    
+    case 'info':
+      const info = await consumet.fetchAnimeInfo(query as string)
+      return res.status(200).json(info)
+    
+    case 'sources':
+      const sources = await consumet.fetchEpisodeSources(query as string)
+      return res.status(200).json(sources)
+  }
+}
 
 export const getEpisodeUrl = async (
   animeTitles: string[],
