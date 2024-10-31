@@ -5,18 +5,22 @@ import Image from "next/image";
 import Link from "next/link";
 import useEmblaCarousel from "embla-carousel-react";
 import { Button } from "@/components/ui/button";
-import { PlayCircle, Plus, ChevronLeft, ChevronRight } from "lucide-react";
+import { WatchButton } from "@/components/watch-button";
+import { WatchlistButton } from "@/components/watchlist/watchlist-button";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { Media } from "@/types/anilistGraphQLTypes";
-import { updateAnimeFromList } from "@/modules/anilist/anilistsAPI";
 
-// Update the props type to use Media from GraphQL types
 export function FeaturedCarousel({ items }: { items: Media[] }) {
-  const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true });
+  const [emblaRef, emblaApi] = useEmblaCarousel({ 
+    loop: true,
+    duration: 30,
+    skipSnaps: false,
+  });
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [prevBtnDisabled, setPrevBtnDisabled] = useState(true);
   const [nextBtnDisabled, setNextBtnDisabled] = useState(true);
 
-  // Carousel logic remains the same
   const scrollPrev = useCallback(() => emblaApi?.scrollPrev(), [emblaApi]);
   const scrollNext = useCallback(() => emblaApi?.scrollNext(), [emblaApi]);
 
@@ -27,25 +31,25 @@ export function FeaturedCarousel({ items }: { items: Media[] }) {
     setNextBtnDisabled(!emblaApi.canScrollNext());
   }, [emblaApi]);
 
-  // Add watchlist handler
-  const handleAddToWatchlist = async (mediaId: number) => {
-    await updateAnimeFromList(mediaId, "PLANNING");
-  };
-
   useEffect(() => {
     if (!emblaApi) return;
     onSelect();
     emblaApi.on("select", onSelect);
     emblaApi.on("reInit", onSelect);
 
+    // Auto-play functionality
     const autoplayInterval = setInterval(() => {
-      emblaApi.scrollNext();
-    }, 5000);
+      if (emblaApi.canScrollNext()) {
+        emblaApi.scrollNext();
+      } else {
+        emblaApi.scrollTo(0); // Reset to first slide
+      }
+    }, 6000); // Change slide every 6 seconds
 
     return () => {
+      clearInterval(autoplayInterval);
       emblaApi.off("select", onSelect);
       emblaApi.off("reInit", onSelect);
-      clearInterval(autoplayInterval);
     };
   }, [emblaApi, onSelect]);
 
@@ -63,40 +67,54 @@ export function FeaturedCarousel({ items }: { items: Media[] }) {
                   src={anime.bannerImage || anime.coverImage?.large || ""}
                   alt={anime.title?.english || anime.title?.romaji || ""}
                   fill
-                  className="object-cover brightness-50"
+                  className="object-cover brightness-[0.7] transition-all duration-500"
                   priority
                 />
               </div>
-              <div className="absolute inset-0 bg-gradient-to-t from-background to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent" />
               <div className="container relative flex h-full items-end pb-12 sm:pb-16 lg:pb-24">
-                <div className="max-w-3xl px-4 sm:px-6 lg:px-8">
-                  <h1 className="mb-2 sm:mb-4 text-2xl sm:text-3xl lg:text-4xl font-bold">
-                    {anime.title?.english || anime.title?.romaji}
-                  </h1>
-                  <p className="mb-4 sm:mb-6 line-clamp-2 sm:line-clamp-3 text-base sm:text-lg text-muted-foreground">
+                <div className="max-w-3xl space-y-4 px-4 sm:px-6 lg:px-8">
+                  <div className="space-y-2">
+                    <div className="flex flex-wrap gap-2">
+                      {anime.genres?.slice(0, 3).map((genre) => (
+                        <Badge key={genre} variant="secondary">
+                          {genre}
+                        </Badge>
+                      ))}
+                    </div>
+                    <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold">
+                      {anime.title?.english || anime.title?.romaji}
+                    </h1>
+                  </div>
+                  
+                  <p className="line-clamp-2 sm:line-clamp-3 text-base sm:text-lg text-muted-foreground">
                     {anime.description?.replace(/<[^>]*>/g, "")}
                   </p>
-                  <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
-                    <Link href={`/anime/${anime.id}`}>
-                      <Button size="lg" className="w-full sm:w-auto">
-                        <PlayCircle className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
-                        Watch Now
-                      </Button>
-                    </Link>
-                    <Button 
-                      size="lg" 
-                      variant="secondary" 
-                      className="w-full sm:w-auto"
-                      onClick={() => anime.id !== undefined && handleAddToWatchlist(anime.id)}
-                    >
-                      <Plus className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
-                      Add to Watchlist
-                    </Button>
+                  
+                  <div className="flex flex-wrap gap-3">
+                    <WatchButton anime={anime} size="lg" />
+                    <WatchlistButton anime={anime} size="lg" variant="secondary" />
+                  </div>
+
+                  <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
+                    {anime.episodes && (
+                      <div>{anime.episodes} Episodes</div>
+                    )}
+                    {anime.duration && (
+                      <div>{anime.duration} Min/Ep</div>
+                    )}
+                    {anime.averageScore && (
+                      <div>Score: {(anime.averageScore / 10).toFixed(1)}</div>
+                    )}
+                    {anime.season && anime.seasonYear && (
+                      <div>{`${anime.season.charAt(0) + anime.season.slice(1).toLowerCase()} ${anime.seasonYear}`}</div>
+                    )}
                   </div>
                 </div>
               </div>
             </div>
-          ))}        </div>
+          ))}
+        </div>
       </div>
 
       <div className="absolute left-2 right-2 sm:left-4 sm:right-4 top-1/2 flex -translate-y-1/2 justify-between">
@@ -108,6 +126,7 @@ export function FeaturedCarousel({ items }: { items: Media[] }) {
           disabled={prevBtnDisabled}
         >
           <ChevronLeft className="h-4 w-4 sm:h-6 sm:w-6" />
+          <span className="sr-only">Previous slide</span>
         </Button>
         <Button
           variant="ghost"
@@ -117,6 +136,7 @@ export function FeaturedCarousel({ items }: { items: Media[] }) {
           disabled={nextBtnDisabled}
         >
           <ChevronRight className="h-4 w-4 sm:h-6 sm:w-6" />
+          <span className="sr-only">Next slide</span>
         </Button>
       </div>
 

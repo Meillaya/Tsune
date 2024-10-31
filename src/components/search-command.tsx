@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import {
-  CommandDialog,
+  Command,
   CommandEmpty,
   CommandGroup,
   CommandInput,
@@ -12,6 +12,11 @@ import {
   CommandList,
   CommandLoading,
 } from "@/components/ui/command";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Search } from "lucide-react";
 import type { Anime } from "@/lib/anilist";
@@ -55,9 +60,9 @@ export function SearchCommand() {
     return () => clearTimeout(searchTimeout);
   }, [query]);
 
-  const handleSelect = (animeId: number) => {
+  const handleSelect = (path: string) => {
     setOpen(false);
-    router.push(`/anime/${animeId}`);
+    router.push(path);
   };
 
   return (
@@ -74,73 +79,78 @@ export function SearchCommand() {
           <span className="text-xs">⌘</span>K
         </kbd>
       </Button>
-      <CommandDialog open={open} onOpenChange={setOpen}>
-        <CommandInput 
-          placeholder="Search anime..." 
-          value={query}
-          onValueChange={setQuery}
-        />
-        <CommandList>
-          <CommandEmpty>No results found.</CommandEmpty>
-          {isLoading && (
-            <CommandLoading>Searching...</CommandLoading>
-          )}
-          {results.length > 0 && (
-            <CommandGroup heading="Search Results">
-              {results.map((anime) => (
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="overflow-hidden p-0">
+          <DialogTitle className="sr-only">Search Anime</DialogTitle>
+          <Command className="[&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:text-muted-foreground [&_[cmdk-group]:not([hidden])_~[cmdk-group]]:pt-0 [&_[cmdk-group]]:px-2 [&_[cmdk-input-wrapper]_svg]:h-5 [&_[cmdk-input-wrapper]_svg]:w-5 [&_[cmdk-input]]:h-12 [&_[cmdk-item]]:px-2 [&_[cmdk-item]]:py-3 [&_[cmdk-item]_svg]:h-5 [&_[cmdk-item]_svg]:w-5">
+            <CommandInput 
+              placeholder="Search anime..." 
+              value={query}
+              onValueChange={setQuery}
+            />
+            <CommandList>
+              <CommandEmpty>No results found.</CommandEmpty>
+              {isLoading && (
+                <CommandLoading>Searching...</CommandLoading>
+              )}
+              {results.length > 0 && (
+                <CommandGroup heading="Search Results">
+                  {results.map((anime) => (
+                    <CommandItem
+                      key={anime.id}
+                      onSelect={() => handleSelect(`/anime/${anime.id}`)}
+                      className="flex items-center gap-2 p-2"
+                    >
+                      <div className="relative h-16 w-12 flex-none overflow-hidden rounded-sm">
+                        <Image
+                          src={anime.coverImage.medium}
+                          alt={anime.title.english || anime.title.romaji}
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
+                      <div className="flex flex-col overflow-hidden">
+                        <span className="truncate font-medium">
+                          {anime.title.english || anime.title.romaji}
+                        </span>
+                        <span className="text-sm text-muted-foreground">
+                          {anime.episodes} Episodes • {anime.status}
+                        </span>
+                      </div>
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              )}
+              <CommandGroup heading="Quick Links">
                 <CommandItem
-                  key={anime.id}
-                  onSelect={() => handleSelect(anime.id)}
-                  className="flex items-center gap-2 p-2"
+                  onSelect={() => handleSelect("/trending")}
+                  className="flex items-center gap-2 py-3"
                 >
-                  <div className="relative h-16 w-12 flex-none overflow-hidden rounded-sm">
-                    <Image
-                      src={anime.coverImage.medium}
-                      alt={anime.title.english || anime.title.romaji}
-                      fill
-                      className="object-cover"
-                    />
-                  </div>
-                  <div className="flex flex-col">
-                    <span className="font-medium">
-                      {anime.title.english || anime.title.romaji}
-                    </span>
-                    <span className="text-sm text-muted-foreground">
-                      {anime.episodes} Episodes • {anime.status}
-                    </span>
-                  </div>
+                  Trending Anime
                 </CommandItem>
-              ))}
-            </CommandGroup>
-          )}
-          <CommandGroup heading="Quick Links">
-            <CommandItem
-              onSelect={() => {
-                setOpen(false);
-                router.push("/trending");
-              }}
-            >
-              Trending Anime
-            </CommandItem>
-            <CommandItem
-              onSelect={() => {
-                setOpen(false);
-                router.push("/popular");
-              }}
-            >
-              Popular This Season
-            </CommandItem>
-            <CommandItem
-              onSelect={() => {
-                setOpen(false);
-                router.push("/upcoming");
-              }}
-            >
-              Upcoming Next Season
-            </CommandItem>
-          </CommandGroup>
-        </CommandList>
-      </CommandDialog>
+                <CommandItem
+                  onSelect={() => handleSelect("/popular")}
+                  className="flex items-center gap-2 py-3"
+                >
+                  Popular This Season
+                </CommandItem>
+                <CommandItem
+                  onSelect={() => handleSelect("/library")}
+                  className="flex items-center gap-2 py-3"
+                >
+                  My Library
+                </CommandItem>
+                <CommandItem
+                  onSelect={() => handleSelect("/search")}
+                  className="flex items-center gap-2 py-3 border-t"
+                >
+                  Advanced Search
+                </CommandItem>
+              </CommandGroup>
+            </CommandList>
+          </Command>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

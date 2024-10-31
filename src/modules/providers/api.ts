@@ -1,109 +1,82 @@
 import { IVideo } from '@consumet/extensions';
-
-
 import { ListAnimeData } from '../../types/anilistAPITypes';
 import { animeCustomTitles } from '../animeCustomTitles';
 import { getAvailableEpisodes, getEpisodes, getParsedAnimeTitles } from '../utils';
 import { getEpisodeUrl as animedrive } from './animedrive';
 import { getEpisodeUrl as animeunity } from './animeunity';
-// import { getEpisodeUrl as monoschinos } from './monoschinos';
 import { getEpisodeUrl as gogoanime } from './gogoanime';
 import { getEpisodeUrl as hianime } from './hianime';
 
-
-
-/**
- * Gets the episode url and isM3U8 flag, with stored language and dubbed
- *
- * @param listAnimeData
- * @param episode
- * @returns
- */
 export const getUniversalEpisodeUrl = async (
   listAnimeData: ListAnimeData,
   episode: number,
-): Promise<IVideo | null> => {
-  const lang = (await localStorage.getItem('source_flag')) as string;
-  const dubbed = (await localStorage.getItem('dubbed')) as unknown as boolean;
+): Promise<IVideo[] | null> => {
+  if (!listAnimeData.media) {
+    console.error('No media data provided');
+    return null;
+  }
 
-  const customTitle = animeCustomTitles[lang] && animeCustomTitles[lang][listAnimeData.media?.id!];
-
+  const dubbed = false; // Default to subbed version
+  const lang = 'US'; // Default to US source
   const animeTitles = getParsedAnimeTitles(listAnimeData.media);
-  if (customTitle) animeTitles.unshift(customTitle.title);
+  const customTitle = animeCustomTitles[lang] && animeCustomTitles[lang][listAnimeData.media.id!];
 
-  console.log(lang + ' ' + dubbed + ' ' + customTitle?.title);
+  if (customTitle) {
+    animeTitles.unshift(customTitle.title);
+  }
 
-  switch (lang) {
-    case 'INT': {
-      const data = await hianime(
-        animeTitles,
-        customTitle ? customTitle.index : 0,
-        episode,
-        dubbed
-      );
+  console.log('Searching with titles:', animeTitles);
 
-      return data ? getDefaultQualityVideo(data) : null;
-    }
-    case 'US': {
-      const data = await gogoanime(
+  // Try each provider in sequence
+  const providers = [
+    {
+      name: 'HiAnime',
+      fn: () => hianime(animeTitles, customTitle ? customTitle.index : 0, episode, dubbed)
+    },
+    {
+      name: 'Gogoanime',
+      fn: () => gogoanime(
         animeTitles,
         customTitle ? customTitle.index : 0,
         episode,
         dubbed,
-        listAnimeData.media.startDate?.year ?? 0,
-      );
-      return data ? getDefaultQualityVideo(data) : null;
-    }
-    case 'IT': {
-      const data = await animeunity(
+        listAnimeData.media.startDate?.year ?? 0
+      )
+    },
+    {
+      name: 'AnimeUnity',
+      fn: () => animeunity(
         animeTitles,
         customTitle ? customTitle.index : 0,
         episode,
         dubbed,
-        listAnimeData.media.startDate?.year ?? 0,
-      );
-      return data ? getDefaultQualityVideo(data) : null;
+        listAnimeData.media.startDate?.year ?? 0
+      )
+    },
+    {
+      name: 'AnimeDrive',
+      fn: () => animedrive(animeTitles, customTitle ? customTitle.index : 0, episode, dubbed)
     }
-    // case 'ES': {
-    //   const data = await monoschinos(
-    //     animeTitles,
-    //     customTitle ? customTitle.index : 0,
-    //     episode,
-    //     dubbed,
-    //     listAnimeData.media.startDate?.year ?? 0,
-    //     getAvailableEpisodes(listAnimeData.media) ?? undefined
-    //   );
-    //   return data ? getDefaultQualityVideo(data) : null;
-    // }
-    case 'HU': {
-      const data = await animedrive(
-        animeTitles,
-        customTitle ? customTitle.index : 0,
-        episode,
-        dubbed,
-      );
-      return data ? getDefaultQualityVideo(data) : null;
+  ];
+
+  for (const provider of providers) {
+    try {
+      console.log(`Trying ${provider.name}...`);
+      const sources = await provider.fn();
+      if (sources && sources.length > 0) {
+        console.log(`Found sources from ${provider.name}`);
+        return sources;
+      }
+    } catch (error) {
+      console.error(`Failed to fetch from ${provider.name}:`, error);
     }
   }
 
-  return null;
-};
-
-export const getDefaultQualityVideo = (videos: IVideo[]): IVideo =>
-  videos.find((video) => video.quality === 'default') ??
-  getBestQualityVideo(videos);
-
-export const getBestQualityVideo = (videos: IVideo[]): IVideo => {
-  const qualityOrder = ['1080p', '720p', '480p', '360p', 'default', 'backup'];
-
-  videos.sort((a, b) => {
-    const indexA = qualityOrder.indexOf(a.quality || 'default');
-    const indexB = qualityOrder.indexOf(b.quality || 'default');
-
-    if (indexA < indexB) return -1;
-    if (indexA > indexB) return 1;
-    return 0;
+  console.error('No working video sources found for:', {
+    titles: animeTitles,
+    episode,
+    dubbed
   });
-
-  return videos[0];
-};
+  
+  return null;
+}

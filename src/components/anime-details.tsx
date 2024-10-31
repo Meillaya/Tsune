@@ -1,9 +1,11 @@
+"use client";
+
 import Image from "next/image";
-import { Button } from "@/components/ui/button";
+import { WatchButton } from "@/components/watch-button";
+import { WatchlistButton } from "@/components/watchlist/watchlist-button";
 import { Badge } from "@/components/ui/badge";
-import { PlayCircle, Plus, Star } from "lucide-react";
+import { Star } from "lucide-react";
 import type { Anime } from "@/lib/anilist";
-import { AnimeTabs } from './anime-tabs';
 
 export function AnimeDetails({ anime }: { anime: Anime }) {
   return (
@@ -37,7 +39,7 @@ export function AnimeDetails({ anime }: { anime: Anime }) {
             </h1>
             
             <div className="flex flex-wrap gap-2">
-              {anime.genres.map((genre) => (
+              {anime.genres?.map((genre) => (
                 <Badge key={genre} variant="secondary">
                   {genre}
                 </Badge>
@@ -47,7 +49,7 @@ export function AnimeDetails({ anime }: { anime: Anime }) {
             <div className="flex items-center gap-4 text-sm">
               <div className="flex items-center">
                 <Star className="mr-1 h-4 w-4 text-yellow-500" />
-                <span>{anime.averageScore / 10}</span>
+                <span>{anime.averageScore ? (anime.averageScore / 10).toFixed(1) : "N/A"}</span>
               </div>
               <div>{anime.format}</div>
               <div>{anime.episodes} Episodes</div>
@@ -59,14 +61,8 @@ export function AnimeDetails({ anime }: { anime: Anime }) {
             </p>
 
             <div className="flex gap-4">
-              <Button size="lg">
-                <PlayCircle className="mr-2 h-5 w-5" />
-                Watch Now
-              </Button>
-              <Button size="lg" variant="secondary">
-                <Plus className="mr-2 h-5 w-5" />
-                Add to Watchlist
-              </Button>
+              <WatchButton anime={anime} size="lg" />
+              <WatchlistButton anime={anime} size="lg" variant="secondary" />
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

@@ -1,7 +1,16 @@
 "use client";
 
-import { Media } from "@/types/anilistGraphQLTypes";
-import { VideoPlayer } from "@/components/video-player";
+import dynamic from 'next/dynamic';
+import type { Media } from "@/types/anilistGraphQLTypes";
+
+const VideoPlayer = dynamic(() => import('@/components/video-player'), {
+  ssr: false,
+  loading: () => (
+    <div className="aspect-video bg-black flex items-center justify-center">
+      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+    </div>
+  ),
+});
 
 interface WatchPageContentProps {
   anime: Media;
@@ -23,7 +32,7 @@ export default function WatchPageContent({
         episodeId={episodeId}
         title={anime.title?.english || anime.title?.romaji || ''}
         episodeNumber={episodeNumber}
-        totalEpisodes={anime.episodes}
+        totalEpisodes={anime.episodes || 0}
         listAnimeData={{
           id: null,
           mediaId: null,

@@ -1,8 +1,7 @@
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { getAnimeInfo } from "@/modules/anilist/anilistsAPI";
-import { Media } from "@/types/anilistGraphQLTypes";
-import { VideoPlayer } from "@/components/video-player";
+import type { Media } from "@/types/anilistGraphQLTypes";
 import { LoadingSpinner } from "@/components/loading-spinner";
 import WatchPageContent from "./WatchPageContent";
 
@@ -11,7 +10,6 @@ interface PageProps {
     animeId: string;
     episodeId: string;
   };
-  searchParams: { [key: string]: string | string[] | undefined };
 }
 
 export const dynamic = 'force-dynamic';
@@ -19,8 +17,12 @@ export const revalidate = 0;
 
 export default async function WatchPage({ params }: PageProps) {
   try {
-    const anime: Media = await getAnimeInfo(parseInt(params.animeId));
+    const animeId = parseInt(params.animeId);
+    if (isNaN(animeId)) {
+      notFound();
+    }
 
+    const anime = await getAnimeInfo(animeId);
     if (!anime) {
       notFound();
     }

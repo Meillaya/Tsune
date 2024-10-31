@@ -30,19 +30,20 @@ export function AnimeTabs({ anime }: AnimeTabsProps) {
 
   const relatedAnime = anime.relations?.edges
     .filter(relation => 
-      relation.relationType === 'PREQUEL' || 
-      relation.relationType === 'SEQUEL'  ||
-      relation.relationType === 'PARENT'  ||
-      relation.relationType === 'SIDE_STORY'
+      relation && 
+      relation.node && 
+      relation.node.type === 'ANIME' &&
+      ['PREQUEL', 'SEQUEL', 'SIDE_STORY', 'PARENT', 'ALTERNATIVE'].includes(relation.relationType)
     )
     .map(relation => ({
       ...relation.node,
       relationType: relation.relationType
-    })) || []
+    })) || [];
 
+  // Process recommendations
   const recommendedAnime = anime.recommendations?.nodes
-    .filter(node => node && node.mediaRecommendation)  // Ensure both node and mediaRecommendation exist
-    .map(rec => rec.mediaRecommendation) || []
+    ?.filter(node => node && node.mediaRecommendation)
+    .map(rec => rec.mediaRecommendation) || [];
   
   // Update the null check condition
   if (relatedAnime.length === 0 && recommendedAnime.length === 0) {

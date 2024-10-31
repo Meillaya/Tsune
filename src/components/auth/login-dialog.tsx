@@ -6,6 +6,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { clientData } from "@/modules/clientData";
 
@@ -42,7 +43,10 @@ export function LoginDialog({
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Enter Your AniList Token</DialogTitle>
+          <DialogTitle>Login to AniList</DialogTitle>
+          <DialogDescription>
+            Connect your AniList account to sync your watchlist and track your progress.
+          </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="grid gap-4 py-4">
           <Input
@@ -50,9 +54,10 @@ export function LoginDialog({
             value={token}
             onChange={(e) => setToken(e.target.value)}
             disabled={isLoading}
+            aria-label="AniList Token"
           />
           {error && (
-            <p className="text-sm text-red-500">{error}</p>
+            <p className="text-sm text-red-500" role="alert">{error}</p>
           )}
           <div className="flex gap-4">
             <Button

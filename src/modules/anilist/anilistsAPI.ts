@@ -513,29 +513,32 @@ export const getAnimesFromTitles = async (titles: string[]) => {
  * @param {*} animeId
  * @returns object with anime info
  */
-export const getAnimeInfo = async (animeId: any): Promise<Media> => {
-  var query = `
-          query($id: Int) {
-              Media(id: $id, type: ANIME) {
-                  ${MEDIA_DATA}
-              }
-          }
-      `;
+// Update the getAnimeInfo function to handle server-side and client-side auth
+export const getAnimeInfo = async (animeId: number): Promise<Media> => {
+  const query = `
+    query($id: Int) {
+      Media(id: $id, type: ANIME) {
+        ${MEDIA_DATA}
+      }
+    }
+  `;
 
-      var headers: {[key: string]: string} = {
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-      };
+  const headers: {[key: string]: string} = {
+    'Content-Type': 'application/json',
+    Accept: 'application/json',
+  };
 
-      if (sessionStorage.getItem('access_token'))
-        headers.Authorization = 'Bearer ' + sessionStorage.getItem('access_token');
+  // Only add auth header if we're on the client and have a token
+  if (typeof window !== 'undefined' && sessionStorage.getItem('access_token')) {
+    headers.Authorization = `Bearer ${sessionStorage.getItem('access_token')}`;
+  }
 
-      var variables = {
-        id: animeId,
-      };
+  const variables = {
+    id: animeId,
+  };
 
-      const options = getOptions(query, variables);
-      const respData = await makeRequest(METHOD, GRAPH_QL_URL, headers, options);
+  const options = getOptions(query, variables);
+  const respData = await makeRequest(METHOD, GRAPH_QL_URL, headers, options);
 
   return respData.data.Media as Media;
 };
