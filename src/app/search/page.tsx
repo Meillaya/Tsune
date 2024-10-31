@@ -10,7 +10,7 @@ export default function SearchPage({
   return (
     <div className="container py-8">
       <h1 className="mb-8 text-3xl font-bold">
-        Search Results for "{searchParams.q}"
+        Search Results for &quot;{searchParams.q}&quot;
       </h1>
       <Suspense fallback={<LoadingSpinner />}>
         <SearchResults query={searchParams.q} />

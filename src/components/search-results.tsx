@@ -73,7 +73,7 @@ export function SearchResults({ query }: { query: string }) {
   if (results.length === 0) {
     return (
       <div className="text-center text-muted-foreground">
-        No results found for "{query}"
+        No results found for &quot;{query}&quot;
       </div>
     );
   }
