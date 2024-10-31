@@ -4,15 +4,6 @@
 
 <p align="center">Simple and easy to use open source anime streaming site without ads.</p>
 
-<p align="center">
-    <img alt="license" src="https://img.shields.io/github/license/aleganza/akuse"> 
-    <img alt="GitHub release (with filter)" src="https://img.shields.io/github/v/release/akuse-app/akuse">
-    <img alt="total-downloads" src="https://img.shields.io/github/downloads/aleganza/akuse/total">
-    <a href="https://discord.gg/?">
-        <img alt="Discord" src="https://img.shields.io/discord/1163970236224118796?style=flat&label=discord&logo=discord&color=%235567E3">
-    </a>
-</p>
-
 
 
 <img title="img" alt="img" src="./assets/Splash.png">
