@@ -165,6 +165,8 @@ export function VideoPlayer({
     let hls: Hls | null = null;
     
     const initializeVideo = async () => {
+      if (!videoRef.current) return;
+
       if (videoSource.isM3U8) {
         if (Hls.isSupported()) {
           hls = new Hls({
@@ -173,7 +175,7 @@ export function VideoPlayer({
             debug: true
           });
           hls.loadSource(videoSource.url);
-          hls.attachMedia(videoRef.current!);
+          hls.attachMedia(videoRef.current);
           
           hls.on(Hls.Events.MANIFEST_PARSED, () => {
             console.log('HLS manifest parsed, starting playback');
@@ -189,8 +191,7 @@ export function VideoPlayer({
         videoRef.current.src = videoSource.url;
         await videoRef.current.play();
       }
-    };
-  
+    };  
     initializeVideo();
   
     return () => {

@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
-import { getAnimeById } from "@/lib/anilist";
+import { getAnimeInfo } from "@/modules/anilist/anilistsAPI";
+import { Media } from "@/types/anilistGraphQLTypes";
 import { VideoPlayer } from "@/components/video-player";
 import { LoadingSpinner } from "@/components/loading-spinner";
 
@@ -9,16 +10,14 @@ export default async function WatchPage({
 }: {
   params: { animeId: string; episodeId: string };
 }) {
-  const animeId = Number(params.animeId);
-  const episodeNumber = Number(params.episodeId);
-  const anime = await getAnimeById(animeId);
+  const anime: Media = await getAnimeInfo(parseInt(params.animeId));
 
   if (!anime) {
     notFound();
   }
 
-  
-  if (isNaN(episodeNumber) || episodeNumber < 1 || episodeNumber > anime.episodes) {
+  const episodeNumber = parseInt(params.episodeId);
+  if (isNaN(episodeNumber) || episodeNumber < 1 || episodeNumber > (anime.episodes || 0)) {
     notFound();
   }
 
@@ -28,7 +27,7 @@ export default async function WatchPage({
         <VideoPlayer
           animeId={params.animeId}
           episodeId={params.episodeId}
-          title={anime.title.english || anime.title.romaji}
+          title={anime.title?.english || anime.title?.romaji || ''}
           episodeNumber={episodeNumber}
           totalEpisodes={anime.episodes} listAnimeData={{
             id: null,
@@ -71,7 +70,7 @@ export default async function WatchPage({
       <div className="grid gap-8 md:grid-cols-[2fr_1fr]">
         <div className="space-y-4">
           <h1 className="text-2xl font-bold">
-            {anime.title.english || anime.title.romaji} - Episode {episodeNumber}
+            {anime.title?.english || anime.title?.romaji} - Episode {episodeNumber}
           </h1>
           <p className="text-muted-foreground">
             {anime.description?.replace(/<[^>]*>/g, "")}

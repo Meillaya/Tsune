@@ -4,13 +4,16 @@ import { useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { getAccessToken, getViewerId, getViewerLists } from "@/modules/anilist/anilistsAPI";
 import type { MediaListStatus } from "@/types/anilistGraphQLTypes";
+import { Suspense } from "react";
 
-export default function AuthCallback() {
+function AuthCallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   
   useEffect(() => {
     async function handleAuth() {
+      if (typeof window === 'undefined') return;
+
       const code = searchParams.get("code");
       if (!code) {
         router.push("/");
@@ -20,7 +23,7 @@ export default function AuthCallback() {
       try {
         const accessToken = await getAccessToken(code);
         localStorage.setItem("access_token", accessToken);
-        localStorage.set("logged", true);
+        localStorage.setItem("logged", "true");
 
         const viewerId = await getViewerId();
         localStorage.setItem("viewer_id", viewerId.toString());
@@ -41,7 +44,8 @@ export default function AuthCallback() {
         console.error("Auth error details:", error instanceof Error ? error.message : String(error));
         router.push("/");
       }
-    }    handleAuth();
+    }
+    handleAuth();
   }, [router, searchParams]);
 
   return (
@@ -51,5 +55,19 @@ export default function AuthCallback() {
         <p>Connecting to AniList</p>
       </div>
     </div>
+  );
+}
+
+export default function AuthCallback() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold mb-4">Loading...</h2>
+        </div>
+      </div>
+    }>
+      <AuthCallbackContent />
+    </Suspense>
   );
 }
