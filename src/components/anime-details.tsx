@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PlayCircle, Plus, Star } from "lucide-react";
 import type { Anime } from "@/lib/anilist";
-import { AnimeTabs } from '@/components/anime-tabs';
+import { AnimeTabs } from './anime-tabs';
 
 export function AnimeDetails({ anime }: { anime: Anime }) {
   return (

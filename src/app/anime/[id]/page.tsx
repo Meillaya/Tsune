@@ -4,7 +4,7 @@ import { use } from "react";
 import { useEffect, useState } from "react";
 import { getAnimeInfo } from "@/modules/anilist/anilistsAPI";
 import { Media, AiringSchedule } from "@/types/anilistGraphQLTypes";
-import { AnimeTabs } from "@/components/anime-tabs";
+import { AnimeTabs } from "../../../components/anime-tabs";
 import { LoadingSpinner } from "@/components/loading-spinner";
 import { Suspense } from "react";
 import { AnimeDetails } from "@/components/anime-details";

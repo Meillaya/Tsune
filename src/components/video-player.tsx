@@ -12,6 +12,13 @@ import { getEpisodeUrl as animedrive } from "@/modules/providers/animedrive";
 import { getParsedAnimeTitles } from "@/modules/utils";
 import { animeCustomTitles } from "@/modules/animeCustomTitles";
 import { getAnimeInfo } from "@/modules/anilist/anilistsAPI";
+import Hls from 'hls.js';
+
+interface Provider {
+  name: string;
+  sources: IVideo[];
+  currentQuality: number;
+}
 
 interface VideoPlayerProps {
   animeId: string;
@@ -30,10 +37,19 @@ export function VideoPlayer({
   totalEpisodes,
   listAnimeData,
 }: VideoPlayerProps) {
+  console.log('VideoPlayer mounted with props:', {
+    animeId,
+    episodeId,
+    title,
+    episodeNumber,
+    totalEpisodes,
+    listAnimeData
+  });
+  
   const router = useRouter();
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false); // Start paused
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(1);
@@ -43,7 +59,7 @@ export function VideoPlayer({
   const [videoSource, setVideoSource] = useState<IVideo | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [currentProviderIndex, setCurrentProviderIndex] = useState(0);
-  const [providers, setProviders] = useState<{name: string, sources: IVideo[]}[]>([]);
+  const [providers, setProviders] = useState<Provider[]>([]);
   const [dubbed, setDubbed] = useState(false);
 
   // Fetch anime data using the provided animeId
@@ -51,43 +67,81 @@ export function VideoPlayer({
 
   useEffect(() => {
     const fetchAnimeData = async () => {
+      console.log('Fetching anime data for ID:', animeId);
       const data = await getAnimeInfo(parseInt(animeId));
+      console.log('Received anime data:', data);
       setAnimeData(data);
     };
-
+  
     fetchAnimeData();
   }, [animeId]);
   
   useEffect(() => {
     const loadProviders = async () => {
+      if (!animeData) {
+        console.log('Waiting for anime data...');
+        return;
+      }
+      
       setIsLoading(true);
-  
-      const animeTitles = getParsedAnimeTitles(listAnimeData.media);
-      const customTitle = animeCustomTitles['INT'] && animeCustomTitles['INT'][listAnimeData.media?.id!];
-      if (customTitle) animeTitles.unshift(customTitle.title);
-  
-      const providerResults = await Promise.all([
-        hianime(animeTitles, customTitle?.index ?? 0, episodeNumber, dubbed),
-        gogoanime(animeTitles, customTitle?.index ?? 0, episodeNumber, dubbed, listAnimeData.media.startDate?.year ?? 0),
-        animeunity(animeTitles, customTitle?.index ?? 0, episodeNumber, dubbed, listAnimeData.media.startDate?.year ?? 0),
-        animedrive(animeTitles, customTitle?.index ?? 0, episodeNumber, dubbed)
-      ]);
-  
-      const availableProviders = [
-        { name: 'HiAnime', sources: providerResults[0] || [] },
-        { name: 'Gogoanime', sources: providerResults[1] || [] },
-        { name: 'AnimeUnity', sources: providerResults[2] || [] },
-        { name: 'AnimeDrive', sources: providerResults[3] || [] }
-      ].filter((p) => p.sources.length > 0);
-  
-      setProviders(availableProviders);
-      setVideoSource(availableProviders[0]?.sources?.[0] ?? null);
+      console.log('Starting provider load with anime data:', animeData);
+      
+      const animeTitles = getParsedAnimeTitles(animeData);
+      console.log('Parsed anime titles:', animeTitles);
+      
+      const providers = [
+        { name: 'HiAnime', fetch: () => hianime(animeTitles, 0, episodeNumber, dubbed) },
+        { name: 'Gogoanime', fetch: () => gogoanime(animeTitles, 0, episodeNumber, dubbed, animeData.startDate?.year ?? 0) },
+        { name: 'AnimeUnity', fetch: () => animeunity(animeTitles, 0, episodeNumber, dubbed, animeData.startDate?.year ?? 0) },
+        { name: 'AnimeDrive', fetch: () => animedrive(animeTitles, 0, episodeNumber, dubbed) }
+      ];
+    
+      for (const provider of providers) {
+        const sources = await provider.fetch();
+        if (sources && sources.length > 0) {
+          setProviders([{ name: provider.name, sources, currentQuality: 0 }]);
+          setVideoSource(sources[0]);
+          break;
+        }
+      }
+      
       setIsLoading(false);
     };
   
     loadProviders();
-  }, [episodeNumber, dubbed, listAnimeData]);
+  }, [episodeNumber, dubbed, animeData]);
+  
+  
 
+  const handleQualityChange = (providerIndex: number, qualityIndex: number) => {
+    const provider = providers[providerIndex];
+    if (!provider) return;
+  
+    const newProviders = [...providers];
+    newProviders[providerIndex].currentQuality = qualityIndex;
+    setProviders(newProviders);
+  
+    if (providerIndex === currentProviderIndex) {
+      const newSource = provider.sources[qualityIndex];
+      setVideoSource(newSource);
+      
+      if (videoRef.current) {
+        const currentTime = videoRef.current.currentTime;
+        videoRef.current.src = newSource.url;
+        videoRef.current.currentTime = currentTime;
+        if (isPlaying) videoRef.current.play();
+      }
+    }
+  };
+
+  const handleSkipEvent = (type: 'intro' | 'outro') => {
+    if (!videoRef.current || !videoSource?.skipEvents) return;
+  
+    const event = videoSource.skipEvents[type as keyof typeof videoSource.skipEvents];
+    if (!event) return;
+  
+    videoRef.current.currentTime = event.end;
+  };
   const handleProviderChange = (index: number) => {
     setCurrentProviderIndex(index);
     const newSource = providers[index]?.sources?.[0] ?? null;
@@ -100,7 +154,56 @@ export function VideoPlayer({
       }
     }
   };
-
+  
+  useEffect(() => {
+    if (!videoRef.current || !videoSource?.url) {
+      console.log('Video source or ref not ready:', { videoSource, videoRef: videoRef.current });
+      return;
+    }
+      
+    console.log('Loading video source:', videoSource);
+    let hls: Hls | null = null;
+    
+    const initializeVideo = async () => {
+      if (videoSource.isM3U8) {
+        if (Hls.isSupported()) {
+          hls = new Hls({
+            enableWorker: true,
+            lowLatencyMode: true,
+            debug: true
+          });
+          hls.loadSource(videoSource.url);
+          hls.attachMedia(videoRef.current!);
+          
+          hls.on(Hls.Events.MANIFEST_PARSED, () => {
+            console.log('HLS manifest parsed, starting playback');
+            videoRef.current?.play()
+              .then(() => console.log('Playback started'))
+              .catch(e => console.error('Playback failed:', e));
+          });
+        } else if (videoRef.current.canPlayType('application/vnd.apple.mpegurl')) {
+          videoRef.current.src = videoSource.url;
+          await videoRef.current.play();
+        }
+      } else {
+        videoRef.current.src = videoSource.url;
+        await videoRef.current.play();
+      }
+    };
+  
+    initializeVideo();
+  
+    return () => {
+      if (hls) {
+        hls.destroy();
+      }
+    };
+  }, [videoSource]);
+  
+  
+  
+  
+  
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
@@ -234,6 +337,12 @@ export function VideoPlayer({
           onProviderChange={handleProviderChange}
           dubbed={dubbed}
           onDubbedChange={setDubbed}
+          onQualityChange={handleQualityChange}
+          onSkipIntro={() => handleSkipEvent('intro')}
+          onSkipOutro={() => handleSkipEvent('outro')}
+          qualities={providers[currentProviderIndex]?.sources.map(s => s.quality) ?? []}
+          currentQuality={providers[currentProviderIndex]?.currentQuality ?? 0}
+          hasSkipEvents={!!videoSource?.skipEvents}
         />
       )}
     </div>

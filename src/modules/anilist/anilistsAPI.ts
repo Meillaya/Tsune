@@ -11,7 +11,7 @@ import { clientData } from '../clientData';
 
 import { getOptions, makeRequest } from '../requests';
 
-const CORS_PROXY = "https://cors-anywhere.herokuapp.com/";
+const CORS_PROXY = "https://corsproxy.io/?";
 const CLIENT_DATA: ClientData = clientData;
 const PAGES: number = 20;
 const METHOD: string = 'POST';
