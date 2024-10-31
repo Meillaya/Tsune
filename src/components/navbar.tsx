@@ -114,15 +114,18 @@ export function Navbar() {
 const handleTokenSubmit = async () => {
   try {
     const accessToken = await getAccessToken(token);
-    localStorage.setItem('access_token', accessToken);
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('access_token', accessToken);
+    }
     
     const id = await getViewerId();
-    localStorage.setItem('viewer_id', id.toString());
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('viewer_id', id.toString());
+    }
     
     const userData = await getViewerInfo(id);
     setUser(userData);
 
-    
     result = await getViewerLists(id, 'CURRENT', 'REPEATING', 'PAUSED');
     const planningListAnime = await getViewerList(id, "PLANNING");
    
@@ -133,59 +136,55 @@ const handleTokenSubmit = async () => {
     .map((value) => value.data)
     .sort(sortNewest);
     
-    
-    localStorage.setItem("anime_lists", JSON.stringify(result));
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem("anime_lists", JSON.stringify(result));
+    }
     setCurrentLists(result);
     setIsListsLoading(false);
   } catch (error) {
     console.error('Login error:', error);
-    localStorage.removeItem('access_token');
+    if (typeof window !== 'undefined') {
+      sessionStorage.removeItem('access_token');
+    }
   }
 };
 
 useEffect(() => {
-
-
-    async function loadPersistedUserData() {
+    async function loadPersistedUserData() {
       setIsListsLoading(true);
-      const accessToken = localStorage.getItem('access_token');
-      const viewerId = localStorage.getItem('viewer_id');
-     
-      if (accessToken && viewerId) {
-        try {
-          const userData = await getViewerInfo(parseInt(viewerId));
-          setUser(userData);
-         
-          let currentList = await getViewerLists(parseInt(viewerId), 'CURRENT', 'REPEATING', 'PAUSED');
-  //         const planningList = await getViewerList(parseInt(viewerId), "PLANNING");
+      const accessToken = typeof window !== 'undefined' ? sessionStorage.getItem('access_token') : null;
+      const viewerId = typeof window !== 'undefined' ? sessionStorage.getItem('viewer_id') : null;
+     
+      if (accessToken && viewerId) {
+        try {
+          const userData = await getViewerInfo(parseInt(viewerId));
+          setUser(userData);
+         
+          let currentList = await getViewerLists(parseInt(viewerId), 'CURRENT', 'REPEATING', 'PAUSED');
           console.log(currentList);
-          setCurrentListAnime(currentList);
-  //         setPlanningListAnime(planningList);
+          setCurrentListAnime(currentList);
 
-  //         currentList = Object.values(entries)
-  //         .map((value) => value.data)
-  //         .sort(sortNewest);
-
-      
-          localStorage.setItem("anime_lists", JSON.stringify(currentList));
+          if (typeof window !== 'undefined') {
+            sessionStorage.setItem("anime_lists", JSON.stringify(currentList));
+          }
           setCurrentLists(currentList);
           console.log("Global Lists Data:", currentList);
-        } catch (error) {
-          console.error('Failed to load persisted user data:', error);
-          handleLogout();
-        }
-      }
+        } catch (error) {
+          console.error('Failed to load persisted user data:', error);
+          handleLogout();
+        }
+      }
     setIsListsLoading(false);
-    }  
-    loadPersistedUserData();
+    }  
+    loadPersistedUserData();
   }, [entries, setCurrentLists, setIsListsLoading]);
 
-
-
   const handleLogout = () => {
-    localStorage.removeItem("access_token");
-    localStorage.removeItem("viewer_id");
-    localStorage.removeItem("anime_lists");
+    if (typeof window !== 'undefined') {
+      sessionStorage.removeItem("access_token");
+      sessionStorage.removeItem("viewer_id");
+      sessionStorage.removeItem("anime_lists");
+    }
     setUser(null);
   };
 

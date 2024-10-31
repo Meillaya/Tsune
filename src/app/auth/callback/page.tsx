@@ -22,11 +22,11 @@ function AuthCallbackContent() {
 
       try {
         const accessToken = await getAccessToken(code);
-        localStorage.setItem("access_token", accessToken);
-        localStorage.setItem("logged", "true");
+        sessionStorage.setItem("access_token", accessToken);
+        sessionStorage.setItem("logged", "true");
 
         const viewerId = await getViewerId();
-        localStorage.setItem("viewer_id", viewerId.toString());
+        sessionStorage.setItem("viewer_id", viewerId.toString());
         
         const lists = await getViewerLists(
           viewerId, 
@@ -36,16 +36,15 @@ function AuthCallbackContent() {
         );
         
         if (lists) {
-          localStorage.setItem("anime_lists", JSON.stringify(lists));
+          sessionStorage.setItem("anime_lists", JSON.stringify(lists));
         }
 
-        router.push("/");
+        router.push(process.env.NEXT_PUBLIC_BASE_URL || "/");
       } catch (error) {
         console.error("Auth error details:", error instanceof Error ? error.message : String(error));
-        router.push("/");
+        router.push(process.env.NEXT_PUBLIC_BASE_URL || "/");
       }
-    }
-    handleAuth();
+    }    handleAuth();
   }, [router, searchParams]);
 
   return (

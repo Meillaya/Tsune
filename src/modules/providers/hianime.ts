@@ -3,7 +3,7 @@ import ProviderCache from './cache';
 import Zoro from '@consumet/extensions/dist/providers/anime/zoro';
 import axios from 'axios';
 import { getCacheId } from '../utils';
-
+const CORS_PROXY = "https://cors-anywhere.herokuapp.com/";
 const cache = new ProviderCache();
 const consumet = new Zoro();
 const apiUrl = 'https://aniwatch-api-ch0nker.vercel.app'
@@ -14,10 +14,12 @@ export const getEpisodeUrl = async (
   episode: number,
   dubbed: boolean,
 ): Promise<IVideo[] | null> => {
-  console.log(
-    `%c Episode ${episode}, looking for ${consumet.name} source...`,
-    `color: #ffc119`,
-  );
+  console.log('HiAnime search params:', {
+    titles: animeTitles,
+    index,
+    episode,
+    dubbed
+  });
 
   for (const animeSearch of animeTitles) {
     const result = await searchEpisodeUrl(
@@ -27,6 +29,7 @@ export const getEpisodeUrl = async (
       dubbed
     );
     if (result) {
+      console.log('HiAnime found source:', result);
       return result;
     }
   }

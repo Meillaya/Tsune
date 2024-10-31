@@ -11,7 +11,7 @@ import { clientData } from '../clientData';
 
 import { getOptions, makeRequest } from '../requests';
 
-// const CORS_PROXY = "https://corsproxy.io/?";
+
 const CLIENT_DATA: ClientData = clientData;
 const PAGES: number = 20;
 const METHOD: string = 'POST';
@@ -238,7 +238,7 @@ const filterAdultMedia = (media?: Media) =>
  * @returns access token
  */
 export const getAccessToken = async (code: string): Promise<string> => {
-  const url = `https://anilist.co/api/v2/oauth/token`;
+  const url = 'https://anilist.co/api/v2/oauth/token';
 
   const data = {
     grant_type: 'authorization_code',
@@ -268,7 +268,7 @@ var query = `
     `;
 
 var headers = {
-  Authorization: 'Bearer ' + localStorage.getItem("access_token"),
+  Authorization: 'Bearer ' + sessionStorage.getItem("access_token"),
   'Content-Type': 'application/json',
   Accept: 'application/json',
 };
@@ -302,7 +302,7 @@ export const getViewerInfo = async (viewerId: number | null) => {
       `;
 
   var headers = {
-    Authorization: 'Bearer ' + localStorage.getItem('access_token'),
+    Authorization: 'Bearer ' + sessionStorage.getItem('access_token'),
     'Content-Type': 'application/json',
     Accept: 'application/json',
   };
@@ -349,7 +349,7 @@ export const getViewerLists = async (
       `;
 
   var headers = {
-    Authorization: 'Bearer ' + localStorage.getItem('access_token'),
+    Authorization: 'Bearer ' + sessionStorage.getItem('access_token'),
     'Content-Type': 'application/json',
     Accept: 'application/json',
   };
@@ -401,7 +401,7 @@ export const getViewerList = async (
       `;
 
   var headers = {
-    Authorization: 'Bearer ' + localStorage.getItem('access_token'),
+    Authorization: 'Bearer ' + sessionStorage.getItem('access_token'),
     'Content-Type': 'application/json',
     Accept: 'application/json',
   };
@@ -434,7 +434,7 @@ export const getFollowingUsers = async (viewerId: any) => {
       `;
 
   var headers = {
-    Authorization: 'Bearer ' + localStorage.getItem('access_token'),
+    Authorization: 'Bearer ' + sessionStorage.getItem('access_token'),
     'Content-Type': 'application/json',
     Accept: 'application/json',
   };
@@ -527,8 +527,8 @@ export const getAnimeInfo = async (animeId: any): Promise<Media> => {
         Accept: 'application/json',
       };
 
-      if (localStorage.getItem('access_token'))
-        headers.Authorization = 'Bearer ' + localStorage.getItem('access_token');
+      if (sessionStorage.getItem('access_token'))
+        headers.Authorization = 'Bearer ' + sessionStorage.getItem('access_token');
 
       var variables = {
         id: animeId,
@@ -577,7 +577,7 @@ export const getAiredAnime = async (
 
   if (viewerId) {
     var headers: any = {
-      Authorization: 'Bearer ' + localStorage.getItem('access_token'),
+      Authorization: 'Bearer ' + sessionStorage.getItem('access_token'),
       'Content-Type': 'application/json',
       Accept: 'application/json',
     };
@@ -594,7 +594,7 @@ export const getAiredAnime = async (
 
   pageData.airingSchedules = pageData.airingSchedules.reverse();
 
-  const adultContent = localStorage.getItem('adult_content') as unknown as boolean;
+  const adultContent = sessionStorage.getItem('adult_content') as unknown as boolean;
   if (!adultContent)
     pageData.airingSchedules = pageData.airingSchedules.filter((value) => filterAdultMedia(value.media));
 
@@ -631,7 +631,7 @@ export const getAiringSchedule = async (
 
   if (viewerId) {
     var headers: any = {
-      Authorization: 'Bearer ' + localStorage.getItem('access_token'),
+      Authorization: 'Bearer ' + sessionStorage.getItem('access_token'),
       'Content-Type': 'application/json',
       Accept: 'application/json',
     };
@@ -646,7 +646,7 @@ export const getAiringSchedule = async (
   const respData = await makeRequest(METHOD, GRAPH_QL_URL, headers, options);
   const pageData = respData.data.Page as AiringPage;
 
-  const adultContent = localStorage.getItem('adult_content') as unknown as boolean;
+  const adultContent = sessionStorage.getItem('adult_content') as unknown as boolean;
   if (!adultContent)
     pageData.airingSchedules = pageData.airingSchedules.filter((value) => filterAdultMedia(value.media));
 
@@ -680,7 +680,7 @@ export const getTrendingAnime = async (
 
   if (viewerId) {
     var headers: any = {
-      Authorization: 'Bearer ' + localStorage.getItem('access_token'),
+      Authorization: 'Bearer ' + sessionStorage.getItem('access_token'),
       'Content-Type': 'application/json',
       Accept: 'application/json',
     };
@@ -723,7 +723,7 @@ export const getMostPopularAnime = async (
 
   if (viewerId) {
     var headers: any = {
-      Authorization: 'Bearer ' + localStorage.getItem('access_token'),
+      Authorization: 'Bearer ' + sessionStorage.getItem('access_token'),
       'Content-Type': 'application/json',
       Accept: 'application/json',
     };
@@ -763,7 +763,7 @@ export const getNextReleases = async (viewerId: number | null) => {
 
   if (viewerId) {
     var headers: any = {
-      Authorization: 'Bearer ' + localStorage.getItem('access_token'),
+      Authorization: 'Bearer ' + sessionStorage.getItem('access_token'),
       'Content-Type': 'application/json',
       Accept: 'application/json',
     };
@@ -808,7 +808,7 @@ export const searchFilteredAnime = async (
 
   if (viewerId) {
     var headers: any = {
-      Authorization: 'Bearer ' + localStorage.getItem('access_token'),
+      Authorization: 'Bearer ' + sessionStorage.getItem('access_token'),
       'Content-Type': 'application/json',
       Accept: 'application/json',
     };
@@ -878,7 +878,7 @@ export const getAnimesByGenre = async (genre: any, viewerId: number | null) => {
 
   if (viewerId) {
     var headers: any = {
-      Authorization: 'Bearer ' + localStorage.getItem('access_token'),
+      Authorization: 'Bearer ' + sessionStorage.getItem('access_token'),
       'Content-Type': 'application/json',
       Accept: 'application/json',
     };
@@ -952,7 +952,7 @@ export const updateAnimeFromList = async (
       `;
 
     var headers = {
-      Authorization: 'Bearer ' + localStorage.getItem('access_token'),
+      Authorization: 'Bearer ' + sessionStorage.getItem('access_token'),
       'Content-Type': 'application/json',
       Accept: 'application/json',
     };
@@ -992,7 +992,7 @@ export const deleteAnimeFromList = async (id: any): Promise<boolean> => {
     console.log('delte: ', id);
 
     var headers = {
-      Authorization: 'Bearer ' + localStorage.getItem('access_token'),
+      Authorization: 'Bearer ' + sessionStorage.getItem('access_token'),
       'Content-Type': 'application/json',
       Accept: 'application/json',
     };
@@ -1031,7 +1031,7 @@ export const updateAnimeProgress = async (
       `;
 
   var headers = {
-    Authorization: 'Bearer ' + localStorage.getItem('access_token'),
+    Authorization: 'Bearer ' + sessionStorage.getItem('access_token'),
     'Content-Type': 'application/json',
     Accept: 'application/json',
   };

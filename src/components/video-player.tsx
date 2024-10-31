@@ -37,19 +37,10 @@ export function VideoPlayer({
   totalEpisodes,
   listAnimeData,
 }: VideoPlayerProps) {
-  console.log('VideoPlayer mounted with props:', {
-    animeId,
-    episodeId,
-    title,
-    episodeNumber,
-    totalEpisodes,
-    listAnimeData
-  });
-  
   const router = useRouter();
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [isPlaying, setIsPlaying] = useState(false); // Start paused
+  const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(1);
@@ -61,16 +52,16 @@ export function VideoPlayer({
   const [currentProviderIndex, setCurrentProviderIndex] = useState(0);
   const [providers, setProviders] = useState<Provider[]>([]);
   const [dubbed, setDubbed] = useState(false);
-
-  // Fetch anime data using the provided animeId
   const [animeData, setAnimeData] = useState<Media | null>(null);
 
   useEffect(() => {
     const fetchAnimeData = async () => {
-      console.log('Fetching anime data for ID:', animeId);
-      const data = await getAnimeInfo(parseInt(animeId));
-      console.log('Received anime data:', data);
-      setAnimeData(data);
+      try {
+        const data = await getAnimeInfo(parseInt(animeId));
+        setAnimeData(data);
+      } catch (error) {
+        console.error('Failed to fetch anime data:', error);
+      }
     };
   
     fetchAnimeData();
@@ -78,40 +69,41 @@ export function VideoPlayer({
   
   useEffect(() => {
     const loadProviders = async () => {
-      if (!animeData) {
-        console.log('Waiting for anime data...');
-        return;
-      }
+      if (!animeData) return;
       
       setIsLoading(true);
-      console.log('Starting provider load with anime data:', animeData);
       
-      const animeTitles = getParsedAnimeTitles(animeData);
-      console.log('Parsed anime titles:', animeTitles);
+      try {
+        const animeTitles = getParsedAnimeTitles(animeData);
+        
+        const providers = [
+          { name: 'HiAnime', fetch: () => hianime(animeTitles, 0, episodeNumber, dubbed) },
+          { name: 'Gogoanime', fetch: () => gogoanime(animeTitles, 0, episodeNumber, dubbed, animeData.startDate?.year ?? 0) },
+          { name: 'AnimeUnity', fetch: () => animeunity(animeTitles, 0, episodeNumber, dubbed, animeData.startDate?.year ?? 0) },
+          { name: 'AnimeDrive', fetch: () => animedrive(animeTitles, 0, episodeNumber, dubbed) }
+        ];
       
-      const providers = [
-        { name: 'HiAnime', fetch: () => hianime(animeTitles, 0, episodeNumber, dubbed) },
-        { name: 'Gogoanime', fetch: () => gogoanime(animeTitles, 0, episodeNumber, dubbed, animeData.startDate?.year ?? 0) },
-        { name: 'AnimeUnity', fetch: () => animeunity(animeTitles, 0, episodeNumber, dubbed, animeData.startDate?.year ?? 0) },
-        { name: 'AnimeDrive', fetch: () => animedrive(animeTitles, 0, episodeNumber, dubbed) }
-      ];
-    
-      for (const provider of providers) {
-        const sources = await provider.fetch();
-        if (sources && sources.length > 0) {
-          setProviders([{ name: provider.name, sources, currentQuality: 0 }]);
-          setVideoSource(sources[0]);
-          break;
+        for (const provider of providers) {
+          try {
+            const sources = await provider.fetch();
+            if (sources && sources.length > 0) {
+              setProviders([{ name: provider.name, sources, currentQuality: 0 }]);
+              setVideoSource(sources[0]);
+              break;
+            }
+          } catch (error) {
+            console.error(`Failed to fetch from ${provider.name}:`, error);
+          }
         }
+      } catch (error) {
+        console.error('Failed to load providers:', error);
+      } finally {
+        setIsLoading(false);
       }
-      
-      setIsLoading(false);
     };
   
     loadProviders();
   }, [episodeNumber, dubbed, animeData]);
-  
-  
 
   const handleQualityChange = (providerIndex: number, qualityIndex: number) => {
     const provider = providers[providerIndex];
@@ -129,7 +121,11 @@ export function VideoPlayer({
         const currentTime = videoRef.current.currentTime;
         videoRef.current.src = newSource.url;
         videoRef.current.currentTime = currentTime;
-        if (isPlaying) videoRef.current.play();
+        if (isPlaying) {
+          videoRef.current.play().catch(error => {
+            console.error('Failed to play video after quality change:', error);
+          });
+        }
       }
     }
   };
@@ -142,6 +138,7 @@ export function VideoPlayer({
   
     videoRef.current.currentTime = event.end;
   };
+
   const handleProviderChange = (index: number) => {
     setCurrentProviderIndex(index);
     const newSource = providers[index]?.sources?.[0] ?? null;
@@ -150,48 +147,67 @@ export function VideoPlayer({
     if (videoRef.current) {
       videoRef.current.currentTime = currentTime;
       if (isPlaying) {
-        videoRef.current.play();
+        videoRef.current.play().catch(error => {
+          console.error('Failed to play video after provider change:', error);
+        });
       }
     }
   };
   
   useEffect(() => {
-    if (!videoRef.current || !videoSource?.url) {
-      console.log('Video source or ref not ready:', { videoSource, videoRef: videoRef.current });
-      return;
-    }
+    if (!videoRef.current || !videoSource?.url) return;
       
-    console.log('Loading video source:', videoSource);
     let hls: Hls | null = null;
     
     const initializeVideo = async () => {
       if (!videoRef.current) return;
 
-      if (videoSource.isM3U8) {
-        if (Hls.isSupported()) {
-          hls = new Hls({
-            enableWorker: true,
-            lowLatencyMode: true,
-            debug: true
-          });
-          hls.loadSource(videoSource.url);
-          hls.attachMedia(videoRef.current);
-          
-          hls.on(Hls.Events.MANIFEST_PARSED, () => {
-            console.log('HLS manifest parsed, starting playback');
-            videoRef.current?.play()
-              .then(() => console.log('Playback started'))
-              .catch(e => console.error('Playback failed:', e));
-          });
-        } else if (videoRef.current.canPlayType('application/vnd.apple.mpegurl')) {
+      try {
+        if (videoSource.isM3U8) {
+          if (Hls.isSupported()) {
+            hls = new Hls({
+              enableWorker: true,
+              lowLatencyMode: true,
+              debug: process.env.NODE_ENV === 'development'
+            });
+            hls.loadSource(videoSource.url);
+            hls.attachMedia(videoRef.current);
+            
+            hls.on(Hls.Events.MANIFEST_PARSED, () => {
+              videoRef.current?.play().catch(error => {
+                console.error('Failed to start playback:', error);
+              });
+            });
+
+            hls.on(Hls.Events.ERROR, (event, data) => {
+              if (data.fatal) {
+                console.error('Fatal HLS error:', data);
+                switch (data.type) {
+                  case Hls.ErrorTypes.NETWORK_ERROR:
+                    hls?.startLoad();
+                    break;
+                  case Hls.ErrorTypes.MEDIA_ERROR:
+                    hls?.recoverMediaError();
+                    break;
+                  default:
+                    hls?.destroy();
+                    break;
+                }
+              }
+            });
+          } else if (videoRef.current.canPlayType('application/vnd.apple.mpegurl')) {
+            videoRef.current.src = videoSource.url;
+            await videoRef.current.play();
+          }
+        } else {
           videoRef.current.src = videoSource.url;
           await videoRef.current.play();
         }
-      } else {
-        videoRef.current.src = videoSource.url;
-        await videoRef.current.play();
+      } catch (error) {
+        console.error('Failed to initialize video:', error);
       }
-    };  
+    };
+
     initializeVideo();
   
     return () => {
@@ -200,10 +216,6 @@ export function VideoPlayer({
       }
     };
   }, [videoSource]);
-  
-  
-  
-  
   
   useEffect(() => {
     const video = videoRef.current;
@@ -214,11 +226,15 @@ export function VideoPlayer({
     const handlePlay = () => setIsPlaying(true);
     const handlePause = () => setIsPlaying(false);
     const handleFullscreenChange = () => setIsFullscreen(!!document.fullscreenElement);
+    const handleError = (e: Event) => {
+      console.error('Video error:', (e as ErrorEvent).message);
+    };
 
     video.addEventListener("timeupdate", handleTimeUpdate);
     video.addEventListener("loadedmetadata", handleLoadedMetadata);
     video.addEventListener("play", handlePlay);
     video.addEventListener("pause", handlePause);
+    video.addEventListener("error", handleError);
     document.addEventListener("fullscreenchange", handleFullscreenChange);
 
     return () => {
@@ -226,6 +242,7 @@ export function VideoPlayer({
       video.removeEventListener("loadedmetadata", handleLoadedMetadata);
       video.removeEventListener("play", handlePlay);
       video.removeEventListener("pause", handlePause);
+      video.removeEventListener("error", handleError);
       document.removeEventListener("fullscreenchange", handleFullscreenChange);
     };
   }, []);
@@ -235,7 +252,9 @@ export function VideoPlayer({
       if (isPlaying) {
         videoRef.current.pause();
       } else {
-        videoRef.current.play();
+        videoRef.current.play().catch(error => {
+          console.error('Failed to play video:', error);
+        });
       }
     }
   };
@@ -279,10 +298,14 @@ export function VideoPlayer({
   const toggleFullscreen = () => {
     if (!containerRef.current) return;
 
-    if (!isFullscreen) {
-      containerRef.current.requestFullscreen();
-    } else {
-      document.exitFullscreen();
+    try {
+      if (!isFullscreen) {
+        containerRef.current.requestFullscreen();
+      } else {
+        document.exitFullscreen();
+      }
+    } catch (error) {
+      console.error('Fullscreen error:', error);
     }
   };
 
@@ -305,8 +328,9 @@ export function VideoPlayer({
           crossOrigin="anonymous"
           onError={(e) => console.error('Video loading error:', e)}
           autoPlay={isPlaying}
+          playsInline
         >
-          {videoSource?.tracks?.map((track, index) => (
+          {videoSource?.tracks?.map((track: { url: string; lang: string }, index: number) => (
             <track
               key={index}
               kind="subtitles"
