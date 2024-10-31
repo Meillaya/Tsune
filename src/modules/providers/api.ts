@@ -23,8 +23,8 @@ export const getUniversalEpisodeUrl = async (
   listAnimeData: ListAnimeData,
   episode: number,
 ): Promise<IVideo | null> => {
-  const lang = (await localStorage.get('source_flag')) as string;
-  const dubbed = (await localStorage.get('dubbed')) as boolean;
+  const lang = (await localStorage.getItem('source_flag')) as string;
+  const dubbed = (await localStorage.getItem('dubbed')) as unknown as boolean;
 
   const customTitle = animeCustomTitles[lang] && animeCustomTitles[lang][listAnimeData.media?.id!];
 

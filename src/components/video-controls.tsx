@@ -1,13 +1,22 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import {
   Play, Pause, Volume2, VolumeX,
-  SkipBack, SkipForward, Settings
+  SkipBack, SkipForward, Settings,
+  Globe, Languages
 } from "lucide-react";
 import { formatTime } from "@/lib/utils";
+import { IVideo } from "@consumet/extensions";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface VideoControlsProps {
   currentTime: number;
@@ -15,12 +24,17 @@ interface VideoControlsProps {
   isPlaying: boolean;
   volume: number;
   isMuted: boolean;
+  providers: {name: string, sources: IVideo[]}[];
+  currentProviderIndex: number;
+  dubbed: boolean;
   onPlayPause: () => void;
   onVolumeChange: (value: number[]) => void;
   onMuteToggle: () => void;
   onSeek: (value: number[]) => void;
   onPrevious?: () => void;
   onNext?: () => void;
+  onProviderChange: (index: number) => void;
+  onDubbedChange: (dubbed: boolean) => void;
   showPrevious?: boolean;
   showNext?: boolean;
 }
@@ -31,16 +45,22 @@ export function VideoControls({
   isPlaying,
   volume,
   isMuted,
+  providers,
+  currentProviderIndex,
+  dubbed,
   onPlayPause,
   onVolumeChange,
   onMuteToggle,
   onSeek,
   onPrevious,
   onNext,
+  onProviderChange,
+  onDubbedChange,
   showPrevious,
   showNext,
 }: VideoControlsProps) {
   const [showVolumeSlider, setShowVolumeSlider] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
 
   return (
     <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4">
@@ -126,10 +146,38 @@ export function VideoControls({
               <SkipForward className="h-6 w-6" />
             </Button>
           )}
+
+<Select
+            value={currentProviderIndex.toString()}
+            onValueChange={(value) => onProviderChange(parseInt(value))}
+          >
+            <SelectTrigger className="w-[180px] bg-black/60 border-none text-white">
+              <Globe className="h-4 w-4 mr-2" />
+              <SelectValue placeholder="Select provider" />
+            </SelectTrigger>
+            <SelectContent>
+              {providers.map((provider, index) => (
+                <SelectItem key={index} value={index.toString()}>
+                  {provider.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
           <Button
             variant="ghost"
             size="icon"
             className="text-white hover:bg-white/20"
+            onClick={() => onDubbedChange(!dubbed)}
+          >
+            <Languages className="h-6 w-6" />
+          </Button>
+
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-white hover:bg-white/20"
+            onClick={() => setShowSettings(!showSettings)}
           >
             <Settings className="h-6 w-6" />
           </Button>

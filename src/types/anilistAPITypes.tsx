@@ -25,3 +25,5 @@ export type ListAnimeData = {
 export type TrendingAnime = AnimeData
 export type MostPopularAnime = AnimeData
 export type CurrentListAnime = ListAnimeData[]
+
+export { Media }

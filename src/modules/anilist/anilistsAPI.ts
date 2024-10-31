@@ -527,7 +527,7 @@ export const getAnimeInfo = async (animeId: any): Promise<Media> => {
         Accept: 'application/json',
       };
 
-      if (localStorage.has('access_token'))
+      if (localStorage.getItem('access_token'))
         headers.Authorization = 'Bearer ' + localStorage.getItem('access_token');
 
       var variables = {

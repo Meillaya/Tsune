@@ -4,9 +4,17 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Media } from "@/types/anilistGraphQLTypes";
 
 export function AnimeGrid({ anime }: { anime: Media[] }) {
+  // Filter out duplicates based on ID
+  const uniqueAnime = anime.reduce((acc: Media[], current) => {
+    const exists = acc.find(item => item.id === current.id);
+    if (!exists && current.id) {
+      acc.push(current);
+    }
+    return acc;
+  }, []);
   return (
     <div className="flex gap-4">
-      {anime.map((item) => (
+      {uniqueAnime.map((item) => (
         <Link 
           key={item.id} 
           href={`/anime/${item.id}`}

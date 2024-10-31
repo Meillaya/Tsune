@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { EPISODES_INFO_URL } from "@/constants/utils";
 import { Card } from "@/components/ui/card";
 import {
   Select,
@@ -51,14 +52,13 @@ export function EpisodeList({ episodes, animeId, coverImage, bannerImage }: Epis
   useEffect(() => {
     const fetchEpisodeData = async () => {
       try {
-        const response = await fetch(`https://api.ani.zip/mappings?anilist_id=${animeId}`);
+        const response = await fetch(`${EPISODES_INFO_URL}${animeId}`);
         const data = await response.json();
         setEpisodeData(data);
       } catch (error) {
         console.error("Error fetching episode data:", error);
       }
     };
-
     fetchEpisodeData();
   }, [animeId]);
 

@@ -9,13 +9,15 @@ export default async function WatchPage({
 }: {
   params: { animeId: string; episodeId: string };
 }) {
-  const anime = await getAnimeById(parseInt(params.animeId));
+  const animeId = Number(params.animeId);
+  const episodeNumber = Number(params.episodeId);
+  const anime = await getAnimeById(animeId);
 
   if (!anime) {
     notFound();
   }
 
-  const episodeNumber = parseInt(params.episodeId);
+  
   if (isNaN(episodeNumber) || episodeNumber < 1 || episodeNumber > anime.episodes) {
     notFound();
   }
@@ -28,8 +30,42 @@ export default async function WatchPage({
           episodeId={params.episodeId}
           title={anime.title.english || anime.title.romaji}
           episodeNumber={episodeNumber}
-          totalEpisodes={anime.episodes}
-        />
+          totalEpisodes={anime.episodes} listAnimeData={{
+            id: null,
+            mediaId: null,
+            progress: undefined,
+            media: {
+              id: undefined,
+              type: undefined,
+              idMal: undefined,
+              title: undefined,
+              format: undefined,
+              status: undefined,
+              description: undefined,
+              startDate: undefined,
+              endDate: undefined,
+              season: undefined,
+              seasonYear: undefined,
+              episodes: 0,
+              duration: undefined,
+              coverImage: undefined,
+              bannerImage: undefined,
+              genres: undefined,
+              synonyms: undefined,
+              averageScore: undefined,
+              meanScore: undefined,
+              popularity: undefined,
+              favourites: undefined,
+              isAdult: undefined,
+              nextAiringEpisode: undefined,
+              airingSchedule: undefined,
+              mediaListEntry: undefined,
+              siteUrl: undefined,
+              trailer: undefined,
+              relations: undefined,
+              recommendations: undefined
+            }
+          }}        />
       </Suspense>
 
       <div className="grid gap-8 md:grid-cols-[2fr_1fr]">

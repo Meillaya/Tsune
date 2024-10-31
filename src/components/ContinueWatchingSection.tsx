@@ -21,7 +21,7 @@ export function ContinueWatchingSection() {
     <div className="section-container">
       <AnimeSection 
         title="Continue Watching" 
-        animeData={[]}
+        animeData={() => {}}
         anime={currentLists.map(item => item.media)} 
       />
     </div>

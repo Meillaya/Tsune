@@ -1,43 +1,75 @@
+"use client";
+
+import { use } from "react";
+import { useEffect, useState } from "react";
+import { getAnimeInfo } from "@/modules/anilist/anilistsAPI";
+import { Media, AiringSchedule } from "@/types/anilistGraphQLTypes";
+import { AnimeTabs } from "@/components/anime-tabs";
+import { LoadingSpinner } from "@/components/loading-spinner";
 import { Suspense } from "react";
-import { notFound } from "next/navigation";
-import { getAnimeById, getAllAnimeIds } from "@/lib/anilist";
 import { AnimeDetails } from "@/components/anime-details";
 import { EpisodeList } from "@/components/episode-list";
-import { LoadingSpinner } from "@/components/loading-spinner";
+import { Anime } from "@/lib/anilist";
+import { Separator } from "@/components/ui/separator";
 
-export async function generateStaticParams() {
-  const ids = await getAllAnimeIds();
-  return ids.map((id) => ({
-    id: id.toString(),
-  }));
-}
+export default function AnimePage({ params }: { params: Promise<{ id: string }> }) {
+  const resolvedParams = use(params);
+  const [anime, setAnime] = useState<Media | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [releasedEpisodes, setReleasedEpisodes] = useState<number>(0);
 
-export default async function AnimePage({
-  params,
-}: {
-  params: Promise<{ id: string }> | { id: string };
-}) {
-  const resolvedParams = await params;
-  const anime = await getAnimeById(parseInt(resolvedParams.id));
+  useEffect(() => {
+    async function fetchAnimeData() {
+      try {
+        const data = await getAnimeInfo(parseInt(resolvedParams.id));
+        setAnime(data);
+        
+        // Calculate released episodes
+        const totalEpisodes = data.episodes || 0;
+        const nextAiring = data.nextAiringEpisode;
+        
+        if (nextAiring && nextAiring.timeUntilAiring > 0) {
+          setReleasedEpisodes(nextAiring.episode - 1);
+        } else {
+          setReleasedEpisodes(totalEpisodes);
+        }
+        
+      } catch (error) {
+        console.error("Failed to fetch anime:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
 
-  if (!anime) {
-    notFound();
+    fetchAnimeData();
+  }, [resolvedParams.id]);
+
+  if (isLoading) {
+    return <LoadingSpinner />;
+  }
+
+  if (!anime || anime.id === undefined) {
+    return <div>Anime not found</div>;
   }
 
   return (
     <div>
       <Suspense fallback={<LoadingSpinner />}>
-        <AnimeDetails anime={anime} />
+        <AnimeDetails anime={anime as Anime} />
       </Suspense>
-      <div className="container py-8">
+      <div className="container space-y-8 py-8">
         <Suspense fallback={<LoadingSpinner />}>
           <EpisodeList 
-            episodes={anime.episodes} 
+            episodes={releasedEpisodes} 
             animeId={anime.id} 
-            coverImage={anime.coverImage.large}
-            bannerImage={anime.bannerImage}
+            coverImage={anime.coverImage?.large ?? ''}
+            bannerImage={anime.bannerImage ?? ''}
           />
         </Suspense>
+        
+        <Separator className="my-8" />
+        
+        <AnimeTabs anime={anime} />
       </div>
     </div>
   );
