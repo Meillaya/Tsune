@@ -1,6 +1,5 @@
 <p align="center">
-    <img width="120px" src="./assets/icon.png"/>
-    <h1 align="center">tsune</h1>
+    <h1 align="center">Tsune</h1>
 </p>
 
 <p align="center">Simple and easy to use open source anime streaming site without ads.</p>
@@ -21,7 +20,7 @@
 
 <br/>
 
-# Why should you choose tsune?
+# Why should you choose Tsune?
 
 - **🚀 Fast:** Smooth and quick streaming with minimal buffering.
 - **🎨 Sleek UI:** User-friendly and eye-catching.
