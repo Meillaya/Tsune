@@ -11,7 +11,7 @@ import { clientData } from '../clientData';
 
 import { getOptions, makeRequest } from '../requests';
 
-const CORS_PROXY = "https://corsproxy.io/?";
+// const CORS_PROXY = "https://corsproxy.io/?";
 const CLIENT_DATA: ClientData = clientData;
 const PAGES: number = 20;
 const METHOD: string = 'POST';
@@ -238,7 +238,7 @@ const filterAdultMedia = (media?: Media) =>
  * @returns access token
  */
 export const getAccessToken = async (code: string): Promise<string> => {
-  const url = `${CORS_PROXY}https://anilist.co/api/v2/oauth/token`;
+  const url = `https://anilist.co/api/v2/oauth/token`;
 
   const data = {
     grant_type: 'authorization_code',
