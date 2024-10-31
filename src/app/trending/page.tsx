@@ -8,6 +8,8 @@ import { LoadingSpinner } from "@/components/loading-spinner";
 import { Button } from "@/components/ui/button";
 import { RefreshCw } from "lucide-react";
 
+export const dynamic = 'force-dynamic';
+
 export default function TrendingPage() {
   const [anime, setAnime] = useState<Media[]>([]);
   const [isLoading, setIsLoading] = useState(true);

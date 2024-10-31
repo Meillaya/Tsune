@@ -6,6 +6,8 @@ import { AnimeGrid } from "@/components/anime-grid";
 import { LoadingSpinner } from "@/components/loading-spinner";
 import type { Media } from "@/types/anilistGraphQLTypes";
 
+export const dynamic = 'force-dynamic';
+
 export default function PopularPage() {
   const [anime, setAnime] = useState<Media[]>([]);
   const [isLoading, setIsLoading] = useState(true);

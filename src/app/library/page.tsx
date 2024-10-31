@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { LoginDialog } from "@/components/auth/login-dialog";
 import { useAuth } from "@/hooks/useAuth";
 
+export const dynamic = 'force-dynamic';
+
 export default function LibraryPage() {
   const { isAuthenticated } = useAuth();
   const [isLoginDialogOpen, setIsLoginDialogOpen] = useState(false);

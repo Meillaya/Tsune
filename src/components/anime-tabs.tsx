@@ -28,7 +28,7 @@ export function AnimeTabs({ anime }: AnimeTabsProps) {
     container.scrollBy({ left: scrollAmount, behavior: 'smooth' })
   }
 
-  const relatedAnime = anime.relations?.edges
+ const relatedAnime = anime.relations?.edges
     .filter(relation => 
       relation && 
       relation.node && 

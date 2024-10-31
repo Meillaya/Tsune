@@ -12,6 +12,8 @@ import { LoginDialog } from "@/components/auth/login-dialog";
 import { useWatchProgress } from "@/hooks/use-watch-progress";
 import { useWatchlist } from "@/hooks/use-watchlist";
 
+export const fetchCache = 'force-no-store';
+
 export default function StatsPage() {
   const { isAuthenticated, lists } = useAuth();
   const { watchlist, isLoading: isWatchlistLoading } = useWatchlist();

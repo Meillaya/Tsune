@@ -11,6 +11,8 @@ import { LoginDialog } from "@/components/auth/login-dialog";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import type { WatchStatus, WatchlistEntry } from "@/types/watchlist";
 
+export const dynamic = 'force-dynamic';
+
 export default function WatchlistPage() {
   const { isAuthenticated, user, lists } = useAuth();
   const [isLoginDialogOpen, setIsLoginDialogOpen] = useState(false);
@@ -23,7 +25,7 @@ export default function WatchlistPage() {
     if (isAuthenticated && lists) {
       const syncedList = lists.map(item => ({
         id: item.mediaId || item.media.id,
-        status: item.status || "watching",
+        status: (item.status || "watching") as WatchStatus,
         progress: item.progress || 0,
         media: item.media,
         updatedAt: Date.now()
@@ -31,10 +33,14 @@ export default function WatchlistPage() {
       setLocalWatchlist(syncedList);
     }
     setIsLoading(false);
-  }, [isAuthenticated, lists]);
+  }, [isAuthenticated, lists, setLocalWatchlist]);
 
   const filteredList = (isAuthenticated ? lists : localWatchlist)
-    ?.filter(item => item.status === status) || [];
+    ?.filter(item => item.status === status)
+    .map(item => ({
+      ...item,
+      updatedAt: item.updatedAt || Date.now()
+    })) || [];
 
   if (isLoading) {
     return <LoadingSpinner />;
@@ -62,7 +68,10 @@ export default function WatchlistPage() {
 
         <div className="space-y-6">
           <WatchlistStats 
-            entries={isAuthenticated ? lists : localWatchlist} 
+            entries={isAuthenticated ? lists.map(item => ({
+              ...item,
+              updatedAt: item.updatedAt || Date.now()
+            })) : localWatchlist} 
           />
         </div>
       </div>

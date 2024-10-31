@@ -7,6 +7,7 @@ export interface UserProfile {
 }
 
 export interface AnimeListEntry {
+  status: string;
   id: number | null;
   mediaId: number | null;
   progress: number | null;
