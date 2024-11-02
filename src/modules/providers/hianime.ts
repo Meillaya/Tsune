@@ -3,7 +3,7 @@ import ProviderCache from './cache';
 import Zoro from '@consumet/extensions/dist/providers/anime/zoro';
 import axios from 'axios';
 import { getCacheId } from '../utils';
-const CORS_PROXY = "https://cors-anywhere.herokuapp.com/";
+
 const cache = new ProviderCache();
 const consumet = new Zoro();
 const apiUrl = 'https://aniwatch-api-ch0nker.vercel.app'
@@ -26,7 +26,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(200).json(sources)
   }
 }
-
 export const getEpisodeUrl = async (
   animeTitles: string[],
   index: number,
@@ -173,6 +172,9 @@ export const getAnimeId = async (
 
   return result;
 };
+
+
+
 
 /**
  * Gets the anime episode id

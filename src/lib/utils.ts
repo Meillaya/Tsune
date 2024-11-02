@@ -30,3 +30,31 @@ export function formatNumber(num: number): string {
     maximumFractionDigits: 1,
   }).format(num);
 }
+
+export interface AuthResponse {
+  success: boolean;
+  user?: any;
+  lists?: any;
+}
+
+export function loadPersistedAuth(): AuthResponse {
+  try {
+    const accessToken = sessionStorage.getItem('access_token');
+    const viewerId = sessionStorage.getItem('viewer_id');
+    const userData = sessionStorage.getItem('user_data');
+    const listsData = sessionStorage.getItem('anime_lists');
+
+    if (!accessToken || !viewerId || !userData || !listsData) {
+      return { success: false };
+    }
+
+    return {
+      success: true,
+      user: JSON.parse(userData),
+      lists: JSON.parse(listsData)
+    };
+  } catch (error) {
+    console.error("Error loading persisted auth:", error);
+    return { success: false };
+  }
+}

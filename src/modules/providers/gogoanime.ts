@@ -1,29 +1,11 @@
 import { IVideo } from '@consumet/extensions';
 import Gogoanime from '@consumet/extensions/dist/providers/anime/gogoanime';
 import ProviderCache from './cache';
-import { getCacheId } from '../utils';
+import { getCacheId, proxyRequest } from '../utils';
 import { NextApiRequest, NextApiResponse } from 'next';
 
 const cache = new ProviderCache();
 const consumet = new Gogoanime();
-
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const { type, query } = req.query
-
-  switch(type) {
-    case 'search':
-      const results = await consumet.search(query as string)
-      return res.status(200).json(results)
-    
-    case 'info':
-      const info = await consumet.fetchAnimeInfo(query as string)
-      return res.status(200).json(info)
-    
-    case 'sources':
-      const sources = await consumet.fetchEpisodeSources(query as string)
-      return res.status(200).json(sources)
-  }
-}
 
 export const getEpisodeUrl = async (
   animeTitles: string[],
@@ -73,29 +55,32 @@ async function searchEpisodeUrl(
   if(cache.search[cacheId] !== undefined)
     return cache.search[cacheId];
 
-  const animeId = await getAnimeId(
-    index,
-    dubbed ? `${animeSearch} (Dub)` : animeSearch,
-    dubbed,
-    releaseDate,
-  );
+  try {
+    const animeId = await getAnimeId(
+      index,
+      dubbed ? `${animeSearch} (Dub)` : animeSearch,
+      dubbed,
+      releaseDate,
+    );
 
-  if (animeId) {
-    const animeEpisodeId = await getAnimeEpisodeId(animeId, episode);
-    if (animeEpisodeId) {
-      const data = await consumet.fetchEpisodeSources(animeEpisodeId);
-      console.log(`%c ${animeSearch}`, `color: #45AD67`);
-      const result = (
-        cache.search[cacheId] = data.sources
-      );
-      return result;
+    if (animeId) {
+      const animeEpisodeId = await getAnimeEpisodeId(animeId, episode);
+      if (animeEpisodeId) {
+        // Use proxy to fetch sources
+        const data = await proxyRequest(`https://apiconsumet-gamma.vercel.app/anime/gogoanime/watch/${animeEpisodeId}`);
+        console.log(`%c ${animeSearch}`, `color: #45AD67`);
+        return (cache.search[cacheId] = data.sources);
+      }
     }
+  } catch (error) {
+    console.error("Error fetching episode:", error);
+    return null;
   }
 
-  cache.search[cacheId] = null;
   console.log(`%c ${animeSearch}`, `color: #E5A639`);
-  return null;
+  return (cache.search[cacheId] = null);
 }
+
 
 /**
  * Gets the anime id

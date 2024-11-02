@@ -15,12 +15,16 @@ export function useAuth() {
 
   useEffect(() => {
     const loadAuth = async () => {
-      const persisted = loadPersistedAuth();
-      if (persisted.success && persisted.lists) {
+      // Check both access token and user data
+      const accessToken = sessionStorage.getItem("access_token");
+      const userData = sessionStorage.getItem("user_data");
+      const listsData = sessionStorage.getItem("anime_lists");
+
+      if (accessToken && userData) {
         setState({
           isAuthenticated: true,
-          user: persisted.user || null,
-          lists: persisted.lists,
+          user: JSON.parse(userData),
+          lists: listsData ? JSON.parse(listsData) : [],
           isLoading: false,
           error: null
         });

@@ -270,11 +270,14 @@ export function VideoControls({
           </div>
         </div>
       </div>
-
       {/* Settings panel */}
       {showSettings && (
         <div className="absolute bottom-full right-4 mb-2 w-56 rounded-md bg-black/80 p-2">
           <div className="space-y-2">
+            <div className="flex items-center justify-between text-sm text-white">
+              <span>Source</span>
+              <span className="text-primary">{providers[currentProviderIndex].name}</span>
+            </div>
             <div className="flex items-center justify-between text-sm text-white">
               <span>Quality</span>
               <Select
@@ -296,6 +299,7 @@ export function VideoControls({
           </div>
         </div>
       )}
+
     </div>
   );
 }
