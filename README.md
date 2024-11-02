@@ -19,18 +19,5 @@
 
 <br/>
 
-# Languages
-
-The languages where both the sub and dub don't work are implemented in the app, but they aren't selectable.
-
-| Source     | Languages                                                        | Sub  | Dub | In-App name |
-| ---------- | ---------------------------------------------------------------- | ---  | ----| ---------   |
-| Gogoanime  | English                                                          | ✅   | ✅   | 🇺🇸 English     |
-| HiAnime    | English, Arabic, French, German, Portuguese, Russian, Spanish... | ✅   | ❌   | 🌍 Universal   |
-| AnimeUnity | Italian                                                          | ✅   | ✅   | 🇮🇹 Italian     |
-|
-| AnimeDrive | Hungarian                                                        | ❌   | ❌   | 🇭🇺 Hungarian   |
-
-> Note: HiAnime doesn't always provide all the languages!
 
 > Note: Currently still in alpha and under active developement
