@@ -5,7 +5,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { WatchlistEntry, WatchStatus } from "@/types/watchlist";
 import { updateAnimeFromList, deleteAnimeFromList } from "@/modules/anilist/anilistsAPI";
-import { AnimeListEntry } from "@/types/auth";
 
 export function useWatchlist() {
   const { isAuthenticated, lists, updateLists } = useAuth();
@@ -14,30 +13,30 @@ export function useWatchlist() {
   const initialLoadDone = useRef(false);
 
   useEffect(() => {
-    if (isAuthenticated && lists && !initialLoadDone.current) {
-      const syncedList = lists.map(item => ({
-        id: item.mediaId || item.media.id,
-        status: (item.status?.toLowerCase() || "watching") as WatchStatus,
-        progress: item.progress || 0,
-        media: {
-          id: item.media.id,
-          title: item.media.title,
-          coverImage: item.media.coverImage,
-          episodes: item.media.episodes,
-          genres: item.media.genres,
-        },
-        updatedAt: Date.now(),
-      }));
-
-      setLocalWatchlist(syncedList);
+    if (!initialLoadDone.current) {
+      if (isAuthenticated && lists) {
+        const syncedList = lists.map(item => ({
+          id: item.mediaId || item.media.id,
+          status: (item.status?.toLowerCase() || "watching") as WatchStatus,
+          progress: item.progress || 0,
+          media: {
+            id: item.media.id,
+            title: item.media.title,
+            coverImage: item.media.coverImage,
+            episodes: item.media.episodes,
+            genres: item.media.genres,
+          },
+          updatedAt: Date.now(),
+        }));
+        setLocalWatchlist(syncedList);
+      }
       initialLoadDone.current = true;
+      setIsLoading(false);
     }
-    setIsLoading(false);
-  }, [isAuthenticated, lists]);
+  }, [isAuthenticated, lists, setLocalWatchlist]);
 
   const addToWatchlist = async (entry: WatchlistEntry) => {
     if (isAuthenticated) {
-      // Update AniList
       const mediaListId = await updateAnimeFromList(
         entry.id,
         entry.status.toUpperCase(),
@@ -46,14 +45,12 @@ export function useWatchlist() {
       );
       
       if (mediaListId) {
-        // Update local state to match AniList
         const updatedLists = lists?.map(item => 
           item.mediaId === entry.id ? { ...item, status: entry.status.toUpperCase() } : item
         ) || [];
         updateLists(updatedLists);
       }
     } else {
-      // Update local storage
       const existingIndex = localWatchlist.findIndex(item => item.id === entry.id);
       if (existingIndex >= 0) {
         const newList = [...localWatchlist];
@@ -67,15 +64,12 @@ export function useWatchlist() {
 
   const removeFromWatchlist = async (animeId: number) => {
     if (isAuthenticated) {
-      // Remove from AniList
       const success = await deleteAnimeFromList(animeId);
       if (success) {
-        // Update local state
         const updatedLists = lists?.filter(item => item.mediaId !== animeId) || [];
         updateLists(updatedLists);
       }
     } else {
-      // Remove from local storage
       setLocalWatchlist(localWatchlist.filter(item => item.id !== animeId));
     }
   };

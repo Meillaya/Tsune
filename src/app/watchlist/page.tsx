@@ -8,51 +8,29 @@ import { WatchlistStats } from "@/components/watchlist/watchlist-stats";
 import { LoadingSpinner } from "@/components/loading-spinner";
 import { Button } from "@/components/ui/button";
 import { LoginDialog } from "@/components/auth/login-dialog";
-import { useLocalStorage } from "@/hooks/use-local-storage";
-import type { WatchStatus, WatchlistEntry } from "@/types/watchlist";
-import { AnimeListEntry } from "@/types/auth";
-
+import { useWatchlist } from "@/hooks/use-watchlist";
+import type { WatchStatus } from "@/types/watchlist";
 
 export const dynamic = 'force-dynamic';
 
 export default function WatchlistPage() {
-  const { isAuthenticated, user, lists } = useAuth();
-  const [isLoginDialogOpen, setIsLoginDialogOpen] = useState(false);
+  const { isAuthenticated } = useAuth();
+  const { watchlist, isLoading } = useWatchlist();
   const [status, setStatus] = useState<WatchStatus>("watching");
-  const [localWatchlist, setLocalWatchlist] = useLocalStorage<WatchlistEntry[]>("watchlist", []);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoginDialogOpen, setIsLoginDialogOpen] = useState(false);
 
-  useEffect(() => {
-    // Sync local watchlist with AniList data when user logs in
-    if (isAuthenticated && lists) {
-      const syncedList = lists.map(item => ({
-        id: item.mediaId || item.media.id,
-        status: (item.status || "watching") as WatchStatus,
-        progress: item.progress || 0,
-        media: item.media,
-        updatedAt: Date.now()
-      }));
-      setLocalWatchlist(syncedList);
-    }
-    setIsLoading(false);
-  }, [isAuthenticated, lists, setLocalWatchlist]);
-
-  const filteredList = (isAuthenticated ? lists : localWatchlist)
-    ?.filter((item): item is WatchlistEntry => item.status === status && item.id !== null)
-    .map(item => ({
-      ...item,
-      id: item.id,
-      updatedAt: 'updatedAt' in item ? item.updatedAt : Date.now()
-    }));
+  const filteredList = watchlist?.filter(item => 
+    item.status?.toLowerCase() === status
+  ) || [];
 
   if (isLoading) {
     return <LoadingSpinner />;
   }
 
   return (
-    <div className="container py-6 space-y-8">
+    <div className="container py-6 space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <h1 className="text-3xl font-bold">My Watchlist</h1>
+        <h1 className="text-2xl font-bold">My Watchlist</h1>
         {!isAuthenticated && (
           <Button onClick={() => setIsLoginDialogOpen(true)}>
             Connect with AniList
@@ -60,7 +38,7 @@ export default function WatchlistPage() {
         )}
       </div>
 
-      <div className="grid gap-8 lg:grid-cols-[1fr_300px]">
+      <div className="grid gap-6 lg:grid-cols-[1fr_300px]">
         <div className="space-y-6">
           <WatchlistFilters 
             currentStatus={status} 
@@ -69,16 +47,8 @@ export default function WatchlistPage() {
           <WatchlistGrid entries={filteredList} />
         </div>
 
-        <div className="space-y-6">
-          <WatchlistStats 
-            entries={isAuthenticated ? lists.filter((item): item is AnimeListEntry => item.mediaId !== null).map(item => ({
-              id: item.mediaId as number,
-              status: item.status as WatchStatus,
-              progress: item.progress || 0,
-              media: item.media,
-              updatedAt: 'updatedAt' in item ? item.updatedAt : Date.now()
-            })) : localWatchlist} 
-          />
+        <div>
+          <WatchlistStats entries={watchlist || []} />
         </div>
       </div>
 
