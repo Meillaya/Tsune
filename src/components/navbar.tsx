@@ -6,8 +6,8 @@ import Image from "next/image";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import { SearchCommand } from "@/components/search-command";
-import { LoginDialog } from "@/components/auth/login-dialog";
 import { useAuth } from "@/hooks/useAuth";
+import { getAuthUrl } from "@/lib/auth";
 import {
   Moon,
   Sun,
@@ -27,9 +27,24 @@ import {
 
 export function Navbar() {
   const { theme, setTheme } = useTheme();
-  const { isAuthenticated, user, isLoading, error, login, logout } = useAuth();
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const { isAuthenticated, user, logout } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  
+  const handleLogin = () => {
+    window.location.href = getAuthUrl();
+  };
+  
+  const handleLogout = () => {
+    // Clear all session storage
+    sessionStorage.clear();
+    
+    // Clear all local storage
+    localStorage.clear();
+    
+    // Refresh the page to reset app state
+    window.location.reload();
+  };
+
 
   const navLinks = [
     { href: "/", label: "Home", icon: PlayCircle },
@@ -87,32 +102,32 @@ export function Navbar() {
           </Button>
 
           {isAuthenticated && user ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-9 w-9 rounded-full">
-                  <Image
-                    src={user.avatar?.medium || ""}
-                    alt={user.name}
-                    fill
-                    className="rounded-full object-cover"
-                  />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={logout}>
-                  Log out
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          ) : (
-            <Button 
-              variant="outline"
-              onClick={() => setIsDialogOpen(true)}
-              className="ml-2"
-            >
-              Login with AniList
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="relative h-9 w-9 rounded-full">
+              <Image
+                src={user.avatar?.medium || ""}
+                alt={user.name}
+                fill
+                className="rounded-full object-cover"
+              />
             </Button>
-          )}
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={handleLogout}>
+              Log out
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      ) : (
+        <Button 
+          variant="outline"
+          onClick={handleLogin}
+          className="ml-2"
+        >
+          Login with AniList
+        </Button>
+      )}
         </div>
       </nav>
 
@@ -133,14 +148,6 @@ export function Navbar() {
           </div>
         </div>
       )}
-
-      <LoginDialog
-        isOpen={isDialogOpen}
-        onOpenChange={setIsDialogOpen}
-        onLogin={login}
-        isLoading={isLoading}
-        error={error}
-      />
     </header>
   );
 }

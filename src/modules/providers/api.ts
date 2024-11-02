@@ -6,7 +6,7 @@ import { getEpisodeUrl as animedrive } from './animedrive';
 import { getEpisodeUrl as animeunity } from './animeunity';
 import { getEpisodeUrl as gogoanime } from './gogoanime';
 import { getEpisodeUrl as hianime } from './hianime';
-import { getEpisodeUrl as aniwatch } from './aniwatch';
+
 
 
 const API_BASE = '/api/anime'
@@ -30,25 +30,22 @@ export const getUniversalEpisodeUrl = async (
   }
 
   const providers = [
-    {
-      name: 'HiAnime',
-      fetch: () => hianime(animeTitles, customTitle?.index || 0, episode, dubbed)
-    },
+    // {
+    //   name: 'HiAnime',
+    //   fetch: async () => {
+    //     try {
+    //       const sources = await hianime(animeTitles, customTitle?.index || 0, episode, dubbed);
+    //       // Don't proxy the video URL itself, only the source fetching requests
+    //       return sources;
+    //     } catch (error) {
+    //       console.log(`HiAnime provider error: ${error}`);
+    //       return null;
+    //     }
+    //   }
+    // },
     {
       name: 'Gogoanime',
       fetch: () => gogoanime(animeTitles, customTitle?.index || 0, episode, dubbed, listAnimeData.media.startDate?.year ?? 0)
-    },
-    {
-      name: 'AnimeUnity',
-      fetch: () => animeunity(animeTitles, customTitle?.index || 0, episode, dubbed, listAnimeData.media.startDate?.year ?? 0)
-    },
-    {
-      name: 'AnimeDrive',
-      fetch: () => animedrive(animeTitles, customTitle?.index || 0, episode, dubbed)
-    },
-    {
-      name: 'AniWatch',
-      fetch: () => aniwatch(listAnimeData.media.id?.toString() || '', episode)
     }
   ];
 
@@ -61,14 +58,10 @@ export const getUniversalEpisodeUrl = async (
       }
     } catch (error) {
       console.error(`Failed to fetch from ${provider.name}:`, error);
+      continue;
     }
   }
 
-  console.error('No working video sources found for:', {
-    titles: animeTitles,
-    episode,
-    dubbed
-  });
-
   return null;
 }
+

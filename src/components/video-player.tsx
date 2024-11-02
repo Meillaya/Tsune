@@ -6,6 +6,7 @@ import { IVideo } from "@consumet/extensions";
 import { getUniversalEpisodeUrl } from "@/modules/providers/api";
 import { LoadingSpinner } from "@/components/loading-spinner";
 import Hls from 'hls.js';
+import hls from "hls.js";
 
 interface VideoPlayerProps {
   animeId: string;
@@ -147,20 +148,98 @@ export function VideoPlayer({
     }
   };
 
-  const toggleFullscreen = () => {
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(Boolean(
+        document.fullscreenElement ||
+        (document as any).webkitFullscreenElement ||
+        (document as any).mozFullScreenElement ||
+        (document as any).msFullscreenElement
+      ));
+    };
+  
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+    document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+    document.addEventListener('MSFullscreenChange', handleFullscreenChange);
+  
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('MSFullscreenChange', handleFullscreenChange);
+    };
+  }, []);
+  
+  const toggleFullscreen = async () => {
     if (!containerRef.current) return;
-
+  
     try {
       if (!isFullscreen) {
-        containerRef.current.requestFullscreen();
+        if (containerRef.current.requestFullscreen) {
+          await containerRef.current.requestFullscreen();
+        } else if ((containerRef.current as any).webkitRequestFullscreen) {
+          await (containerRef.current as any).webkitRequestFullscreen();
+        } else if ((containerRef.current as any).mozRequestFullScreen) {
+          await (containerRef.current as any).mozRequestFullScreen();
+        } else if ((containerRef.current as any).msRequestFullscreen) {
+          await (containerRef.current as any).msRequestFullscreen();
+        }
       } else {
-        document.exitFullscreen();
+        if (document.exitFullscreen) {
+          await document.exitFullscreen();
+        } else if ((document as any).webkitExitFullscreen) {
+          await (document as any).webkitExitFullscreen();
+        } else if ((document as any).mozCancelFullScreen) {
+          await (document as any).mozCancelFullScreen();
+        } else if ((document as any).msExitFullscreen) {
+          await (document as any).msExitFullscreen();
+        }
       }
     } catch (error) {
       console.error('Fullscreen error:', error);
     }
-  };
+  };  
 
+  const handleQualityChange = (index: number) => {
+    if (!videoRef.current || !providers[currentProviderIndex]?.sources[index]) return;
+  
+    const currentTime = videoRef.current.currentTime;
+    const wasPlaying = !videoRef.current.paused;
+    const newSource = providers[currentProviderIndex].sources[index];
+  
+    setVideoSource(newSource);
+  
+    const handleLoaded = () => {
+      if (videoRef.current) {
+        videoRef.current.currentTime = currentTime;
+        if (wasPlaying) {
+          videoRef.current.play();
+        }
+      }
+    };
+  
+    if (newSource.isM3U8) {
+      if (Hls.isSupported()) {
+        if (Hls) {
+          Hls.destroy();
+        }
+        const newHls = new Hls();
+        newHls.loadSource(newSource.url);
+        newHls.attachMedia(videoRef.current);
+        newHls.on(Hls.Events.MANIFEST_PARSED, handleLoaded);
+        setHls(newHls);
+      }
+    } else {
+      videoRef.current.src = newSource.url;
+      videoRef.current.addEventListener('loadedmetadata', handleLoaded, { once: true });
+    }
+  };    
+  const handleProviderChange = (index: number) => {
+    setCurrentProviderIndex(index);
+    handleQualityChange(0); // Reset to first quality option of new provider
+  };
+  
   if (isLoading) {
     return (
       <div className="aspect-video bg-black rounded-lg shadow-lg flex items-center justify-center">
@@ -198,10 +277,17 @@ export function VideoPlayer({
         className="h-full w-full rounded-lg"
         poster={listAnimeData.media?.coverImage?.extraLarge}
         crossOrigin="anonymous"
-        onError={(e) => console.error('Video loading error:', e)}
-        autoPlay={isPlaying}
+        onPlay={() => setIsPlaying(true)}
+        onPause={() => setIsPlaying(false)}
+        onTimeUpdate={() => setCurrentTime(videoRef.current?.currentTime || 0)}
+        onLoadedMetadata={() => setDuration(videoRef.current?.duration || 0)}
+        onVolumeChange={() => {
+          setVolume(videoRef.current?.volume || 1);
+          setIsMuted(videoRef.current?.muted || false);
+        }}
+        // onFullscreenChange={() => setIsFullscreen(document.fullscreenElement !== null)}
         playsInline
-      >
+        >
         {videoSource?.tracks?.map((track: { url: string; lang: string }, index: number) => (
           <track
             key={index}
@@ -228,8 +314,8 @@ export function VideoPlayer({
           providers={providers}
           currentProviderIndex={currentProviderIndex}
           dubbed={dubbed}
-          qualities={providers[currentProviderIndex]?.sources.map(s => s.quality) ?? []}
-          currentQuality={0}
+          qualities={providers[currentProviderIndex]?.sources.map(s => s.quality).filter((q): q is string => q !== undefined) ?? []}
+          currentQuality={providers[currentProviderIndex]?.sources.findIndex(s => s.url === videoSource?.url) ?? 0}
           hasSkipEvents={false}
           onPlayPause={handlePlayPause}
           onVolumeChange={handleVolumeChange}
@@ -237,9 +323,9 @@ export function VideoPlayer({
           onSeek={handleSeek}
           onPrevious={episodeNumber > 1 ? handlePreviousEpisode : undefined}
           onNext={episodeNumber < totalEpisodes ? handleNextEpisode : undefined}
-          onProviderChange={setCurrentProviderIndex}
+          onProviderChange={handleProviderChange}
           onDubbedChange={setDubbed}
-          onQualityChange={() => {}}
+          onQualityChange={handleQualityChange}
           onToggleFullscreen={toggleFullscreen}
           onSeekBackward={() => handleSeek([Math.max(0, currentTime - 10)])}
           onSeekForward={() => handleSeek([Math.min(duration, currentTime + 10)])}
@@ -247,4 +333,8 @@ export function VideoPlayer({
       )}
     </div>
   );
+}
+
+function setHls(newHls: Hls) {
+  throw new Error("Function not implemented.");
 }

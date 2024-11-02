@@ -10,6 +10,7 @@ import { ClientData } from '../../types/types';
 import { clientData } from '../clientData';
 
 import { getOptions, makeRequest } from '../requests';
+import { proxyRequest } from '../utils';
 
 
 const CLIENT_DATA: ClientData = clientData;
@@ -248,7 +249,12 @@ export const getAccessToken = async (code: string): Promise<string> => {
     code: code,
   };
 
-  const respData = await makeRequest(METHOD, url, HEADERS, data);
+  const respData = await proxyRequest(url, 'POST', {
+    'Content-Type': 'application/json',
+    Accept: 'application/json',
+  }, data);
+
+  // const respData = await makeRequest(METHOD, url, HEADERS, data);
   console.log(respData);
   return respData.access_token;
 };

@@ -10,6 +10,8 @@ import { Button } from "@/components/ui/button";
 import { LoginDialog } from "@/components/auth/login-dialog";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import type { WatchStatus, WatchlistEntry } from "@/types/watchlist";
+import { AnimeListEntry } from "@/types/auth";
+
 
 export const dynamic = 'force-dynamic';
 
@@ -36,11 +38,12 @@ export default function WatchlistPage() {
   }, [isAuthenticated, lists, setLocalWatchlist]);
 
   const filteredList = (isAuthenticated ? lists : localWatchlist)
-    ?.filter(item => item.status === status)
+    ?.filter((item): item is WatchlistEntry => item.status === status && item.id !== null)
     .map(item => ({
       ...item,
-      updatedAt: item.updatedAt || Date.now()
-    })) || [];
+      id: item.id,
+      updatedAt: 'updatedAt' in item ? item.updatedAt : Date.now()
+    }));
 
   if (isLoading) {
     return <LoadingSpinner />;
@@ -68,9 +71,12 @@ export default function WatchlistPage() {
 
         <div className="space-y-6">
           <WatchlistStats 
-            entries={isAuthenticated ? lists.map(item => ({
-              ...item,
-              updatedAt: item.updatedAt || Date.now()
+            entries={isAuthenticated ? lists.filter((item): item is AnimeListEntry => item.mediaId !== null).map(item => ({
+              id: item.mediaId as number,
+              status: item.status as WatchStatus,
+              progress: item.progress || 0,
+              media: item.media,
+              updatedAt: 'updatedAt' in item ? item.updatedAt : Date.now()
             })) : localWatchlist} 
           />
         </div>

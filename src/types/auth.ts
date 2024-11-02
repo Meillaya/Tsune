@@ -12,6 +12,7 @@ export interface AnimeListEntry {
   mediaId: number | null;
   progress: number | null;
   media: {
+    genres: any;
     id: number;
     title: {
       english?: string;

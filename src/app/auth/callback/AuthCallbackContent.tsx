@@ -1,115 +1,66 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { getAccessToken, getViewerId, getViewerLists } from "@/modules/anilist/anilistsAPI";
+import { getAccessToken, getViewerId, getViewerInfo, getViewerLists } from "@/modules/anilist/anilistsAPI";
 import type { MediaListStatus } from "@/types/anilistGraphQLTypes";
-import { LoadingSpinner } from "@/components/loading-spinner";
 
 export default function AuthCallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [error, setError] = useState<string | null>(null);
-  const [isProcessing, setIsProcessing] = useState(true);
 
   useEffect(() => {
-    let mounted = true;
+    const handleAuth = async () => {
+      const code = searchParams?.get("code");
+      if (!code) {
+        router.push("/");
+        return;
+      }
 
-    async function handleAuth() {
       try {
-        const code = searchParams.get("code");
-        if (!code) {
-          setError("No authorization code provided");
-          setTimeout(() => router.push("/"), 2000);
-          return;
-        }
-
+        // Get and store access token
         const accessToken = await getAccessToken(code);
-        if (!accessToken || !mounted) return;
+        sessionStorage.setItem("access_token", accessToken);
 
-        if (typeof window !== 'undefined') {
-          sessionStorage.setItem("access_token", accessToken);
-          sessionStorage.setItem("logged", "true");
-        }
-
+        // Get and store user ID
         const viewerId = await getViewerId();
-        if (!viewerId || !mounted) return;
+        sessionStorage.setItem("viewer_id", viewerId.toString());
 
-        if (typeof window !== 'undefined') {
-          sessionStorage.setItem("viewer_id", viewerId.toString());
-        }
+        // Store user data in background
+        getViewerInfo(viewerId).then(userData => {
+          const userProfile = {
+            id: userData.id,
+            name: userData.name,
+            avatar: {
+              medium: userData.avatar?.medium
+            }
+          };
+          sessionStorage.setItem("user_data", JSON.stringify(userProfile));
+        });
 
-        const lists = await getViewerLists(
+        // Get lists in background
+        getViewerLists(
           viewerId,
           "CURRENT" as MediaListStatus,
           "REPEATING" as MediaListStatus,
           "PAUSED" as MediaListStatus
-        );
+        ).then(lists => {
+          if (lists) {
+            sessionStorage.setItem("anime_lists", JSON.stringify(lists));
+          }
+        });
 
-        if (lists && mounted && typeof window !== 'undefined') {
-          sessionStorage.setItem("anime_lists", JSON.stringify(lists));
-        }
-
-        if (mounted) {
-          router.push("/");
-        }
+        // Redirect immediately after essential data is stored
+        router.push("/");
+        
       } catch (error) {
         console.error("Auth error:", error);
-        if (mounted) {
-          setError("Authentication failed. Please try again.");
-          setTimeout(() => router.push("/"), 2000);
-        }
-      } finally {
-        if (mounted) {
-          setIsProcessing(false);
-        }
+        router.push("/");
       }
-    }
+    };
 
     handleAuth();
-
-    return () => {
-      mounted = false;
-    };
   }, [router, searchParams]);
 
-  if (error) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="text-center">
-          <div className="text-red-500 mb-4">
-            <svg
-              className="w-12 h-12 mx-auto"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-              />
-            </svg>
-          </div>
-          <h2 className="text-xl font-semibold mb-2">{error}</h2>
-          <p className="text-muted-foreground">Redirecting to home page...</p>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="flex min-h-screen items-center justify-center">
-      <div className="text-center">
-        <LoadingSpinner />
-        <h2 className="mt-4 text-xl font-semibold">
-          {isProcessing ? "Logging in..." : "Redirecting..."}
-        </h2>
-        <p className="text-muted-foreground">
-          {isProcessing ? "Connecting to AniList" : "Almost there..."}
-        </p>
-      </div>
-    </div>
-  );
+  return null;
 }

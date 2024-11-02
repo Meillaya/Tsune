@@ -1,6 +1,7 @@
 import { getAccessToken, getViewerId, getViewerInfo, getViewerLists } from "@/modules/anilist/anilistsAPI";
 import type { AuthResponse, AnimeListEntry } from "@/types/auth";
 import type { MediaListStatus } from "@/types/anilistGraphQLTypes";
+import { clientData } from "@/modules/clientData";
 
 export async function authenticateUser(token: string): Promise<AuthResponse> {
   try {
@@ -16,53 +17,30 @@ export async function authenticateUser(token: string): Promise<AuthResponse> {
       return { success: false, error: "Failed to obtain user ID" };
     }
 
-    sessionStorage.setItem("viewer_id", viewerId.toString());
-
     const userData = await getViewerInfo(viewerId);
     if (!userData) {
       return { success: false, error: "Failed to fetch user data" };
     }
 
-    const lists = await getViewerLists(
-      viewerId,
-      "CURRENT" as MediaListStatus,
-      "REPEATING" as MediaListStatus,
-      "PAUSED" as MediaListStatus
-    );
-
-    const serializedLists: AnimeListEntry[] = lists.map(item => ({
-      id: item.id,
-      mediaId: item.mediaId,
-      progress: item.progress,
-      media: {
-        id: item.media.id,
-        title: {
-          english: item.media.title?.english,
-          romaji: item.media.title?.romaji
-        },
-        coverImage: {
-          large: item.media.coverImage?.large
-        },
-        episodes: item.media.episodes,
-        status: item.media.status
+    // Store complete user data including avatar
+    const userProfile = {
+      id: userData.id,
+      name: userData.name,
+      avatar: {
+        medium: userData.avatar?.medium
       }
-    }));
-
-    sessionStorage.setItem("anime_lists", JSON.stringify(serializedLists));
+    };
+    
+    sessionStorage.setItem("user_data", JSON.stringify(userProfile));
+    sessionStorage.setItem("viewer_id", viewerId.toString());
 
     return {
       success: true,
-      user: {
-        id: userData.id,
-        name: userData.name,
-        avatar: {
-          medium: userData.avatar?.medium
-        }
-      },
-      lists: serializedLists
+      user: userProfile,
+      lists: []
     };
   } catch (error) {
-    console.error("Authentication error:", error);
+    console.error('Authentication error:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : "Authentication failed"
@@ -96,4 +74,9 @@ export function loadPersistedAuth(): AuthResponse {
     console.error("Error loading persisted auth:", error);
     return { success: false, error: "Failed to load saved session" };
   }
+}
+
+export function getAuthUrl() {
+
+  return `https://anilist.co/api/v2/oauth/authorize?client_id=${clientData.clientId}&redirect_uri=${clientData.redirectUri}&response_type=code`;
 }

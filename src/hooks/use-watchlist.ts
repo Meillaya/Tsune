@@ -1,19 +1,20 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { WatchlistEntry, WatchStatus } from "@/types/watchlist";
 import { updateAnimeFromList, deleteAnimeFromList } from "@/modules/anilist/anilistsAPI";
+import { AnimeListEntry } from "@/types/auth";
 
 export function useWatchlist() {
   const { isAuthenticated, lists, updateLists } = useAuth();
   const [localWatchlist, setLocalWatchlist] = useLocalStorage<WatchlistEntry[]>("watchlist", []);
   const [isLoading, setIsLoading] = useState(true);
+  const initialLoadDone = useRef(false);
 
   useEffect(() => {
-    // Sync local watchlist with AniList data when user logs in
-    if (isAuthenticated && lists) {
+    if (isAuthenticated && lists && !initialLoadDone.current) {
       const syncedList = lists.map(item => ({
         id: item.mediaId || item.media.id,
         status: (item.status?.toLowerCase() || "watching") as WatchStatus,
@@ -27,7 +28,9 @@ export function useWatchlist() {
         },
         updatedAt: Date.now(),
       }));
+
       setLocalWatchlist(syncedList);
+      initialLoadDone.current = true;
     }
     setIsLoading(false);
   }, [isAuthenticated, lists]);
