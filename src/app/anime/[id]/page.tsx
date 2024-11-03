@@ -23,6 +23,9 @@ export default function AnimePage({ params }: { params: Promise<{ id: string }> 
       try {
         const data = await getAnimeInfo(parseInt(resolvedParams.id));
         setAnime(data);
+        // console.log('Relations:', data.relations?.edges?.length);
+        // console.log('Recommendations:', data.recommendations?.nodes?.length);
+        
         
         // Calculate released episodes
         const totalEpisodes = data.episodes || 0;

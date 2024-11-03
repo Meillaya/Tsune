@@ -13,7 +13,11 @@ import { getOptions, makeRequest } from '../requests';
 import { proxyRequest } from '../utils';
 
 
-const CLIENT_DATA: ClientData = clientData;
+const CLIENT_DATA: ClientData = {
+  clientId: clientData.clientId,
+  redirectUri: clientData.redirectUri,
+  clientSecret: clientData.clientSecret || ''
+};
 const PAGES: number = 20;
 const METHOD: string = 'POST';
 const GRAPH_QL_URL: string = 'https://graphql.anilist.co';
@@ -249,13 +253,16 @@ export const getAccessToken = async (code: string): Promise<string> => {
     code: code,
   };
 
+  console.log('Auth request data:', {
+    ...data,
+     // Don't log the secret
+  });
+
   const respData = await proxyRequest(url, 'POST', {
     'Content-Type': 'application/json',
     Accept: 'application/json',
   }, data);
 
-  // const respData = await makeRequest(METHOD, url, HEADERS, data);
-  console.log(respData);
   return respData.access_token;
 };
 
@@ -544,6 +551,12 @@ export const getAnimeInfo = async (animeId: number): Promise<Media> => {
   };
 
   const options = getOptions(query, variables);
+  // console.log('Making request with:', {
+  //   method: METHOD,
+  //   url: GRAPH_QL_URL,
+  //   headers,
+  //   options
+  // });
   const respData = await makeRequest(METHOD, GRAPH_QL_URL, headers, options);
 
   return respData.data.Media as Media;

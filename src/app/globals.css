@@ -58,11 +58,41 @@
   }
 }
 
+
 @layer components {
   .container {
-    @apply px-4 md:px-8 lg:px-16;
+    @apply px-4 md:px-8 lg:px-16 max-w-screen-2xl mx-auto;
+  }
+
+  .flex-center {
+    @apply flex items-center justify-center;
+  }
+
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
   }
 }
+
+/* Glass effects */
+.glass {
+  @apply bg-background/80 backdrop-blur-md;
+}
+
+.glass-hover {
+  @apply hover:bg-background/90;
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+=
 
 /* Hide scrollbar but keep functionality */
 .overflow-x-auto {

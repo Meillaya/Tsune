@@ -11,6 +11,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Media } from "@/types/anilistGraphQLTypes";
 
+
 export function FeaturedCarousel({ items }: { items: Media[] }) {
   const [emblaRef, emblaApi] = useEmblaCarousel({ 
     loop: true,
@@ -54,13 +55,13 @@ export function FeaturedCarousel({ items }: { items: Media[] }) {
   }, [emblaApi, onSelect]);
 
   return (
-    <div className="relative group">
-      <div className="overflow-hidden" ref={emblaRef}>
-        <div className="flex">
+    <div className="relative group h-screen">
+      <div className="overflow-hidden h-full" ref={emblaRef}>
+        <div className="flex h-full">
           {items.map((anime) => (
             <div
               key={anime.id}
-              className="relative min-h-[50vh] sm:min-h-[60vh] lg:min-h-[70vh] min-w-full flex-[0_0_100%]"
+              className="relative h-screen min-w-full flex-[0_0_100%]"
             >
               <div className="absolute inset-0">
                 <Image
@@ -72,7 +73,7 @@ export function FeaturedCarousel({ items }: { items: Media[] }) {
                 />
               </div>
               <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent" />
-              <div className="container relative flex h-full items-end pb-12 sm:pb-16 lg:pb-24">
+              <div className="container relative flex h-full items-center pb-24">
                 <div className="max-w-3xl space-y-4 px-4 sm:px-6 lg:px-8">
                   <div className="space-y-2">
                     <div className="flex flex-wrap gap-2">
@@ -117,28 +118,28 @@ export function FeaturedCarousel({ items }: { items: Media[] }) {
         </div>
       </div>
 
-      <div className="absolute left-2 right-2 sm:left-4 sm:right-4 top-1/2 flex -translate-y-1/2 justify-between">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8 sm:h-12 sm:w-12 rounded-full bg-background/50 opacity-0 transition-opacity group-hover:opacity-100"
-          onClick={scrollPrev}
-          disabled={prevBtnDisabled}
-        >
-          <ChevronLeft className="h-4 w-4 sm:h-6 sm:w-6" />
-          <span className="sr-only">Previous slide</span>
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8 sm:h-12 sm:w-12 rounded-full bg-background/50 opacity-0 transition-opacity group-hover:opacity-100"
-          onClick={scrollNext}
-          disabled={nextBtnDisabled}
-        >
-          <ChevronRight className="h-4 w-4 sm:h-6 sm:w-6" />
-          <span className="sr-only">Next slide</span>
-        </Button>
-      </div>
+      <div className="absolute left-2 right-2 sm:left-4 sm:right-4 top-1/2 flex -translate-y-1/2 justify-between z-20">
+  <Button
+    variant="ghost"
+    size="icon"
+    className="h-8 w-8 sm:h-12 sm:w-12 rounded-full bg-background/50 hover:bg-background/70 transition-all duration-200 backdrop-blur-sm"
+    onClick={scrollPrev}
+    disabled={prevBtnDisabled}
+  >
+    <ChevronLeft className="h-4 w-4 sm:h-6 sm:w-6" />
+    <span className="sr-only">Previous slide</span>
+  </Button>
+  <Button
+    variant="ghost"
+    size="icon"
+    className="h-8 w-8 sm:h-12 sm:w-12 rounded-full bg-background/50 hover:bg-background/70 transition-all duration-200 backdrop-blur-sm"
+    onClick={scrollNext}
+    disabled={nextBtnDisabled}
+  >
+    <ChevronRight className="h-4 w-4 sm:h-6 sm:w-6" />
+    <span className="sr-only">Next slide</span>
+  </Button>
+</div>
 
       <div className="absolute bottom-4 sm:bottom-8 left-1/2 flex -translate-x-1/2 gap-1.5 sm:gap-2">
         {items.map((_, index) => (

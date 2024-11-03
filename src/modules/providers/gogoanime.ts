@@ -66,9 +66,9 @@ async function searchEpisodeUrl(
     if (animeId) {
       const animeEpisodeId = await getAnimeEpisodeId(animeId, episode);
       if (animeEpisodeId) {
-        // Use proxy to fetch sources
-        const data = await proxyRequest(`https://apiconsumet-gamma.vercel.app/anime/gogoanime/watch/${animeEpisodeId}`);
-        console.log(`%c ${animeSearch}`, `color: #45AD67`);
+        // Request all qualities
+        const data = await proxyRequest(`https://apiconsumet-gamma.vercel.app/anime/gogoanime/watch/${animeEpisodeId}?server=gogocdn`);
+        console.log(`Found sources for ${animeSearch}:`, data.sources);
         return (cache.search[cacheId] = data.sources);
       }
     }
@@ -77,9 +77,9 @@ async function searchEpisodeUrl(
     return null;
   }
 
-  console.log(`%c ${animeSearch}`, `color: #E5A639`);
   return (cache.search[cacheId] = null);
 }
+
 
 
 /**

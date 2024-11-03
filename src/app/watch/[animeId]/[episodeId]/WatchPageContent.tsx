@@ -6,6 +6,7 @@ import { WatchlistButton } from "@/components/watchlist/watchlist-button";
 import { EpisodeNavigation } from "@/components/episode-navigation";
 import { Media } from "@/types/anilistGraphQLTypes";
 import { Card } from "@/components/ui/card";
+import { useEffect } from "react";
 
 interface WatchPageContentProps {
   anime: Media;
@@ -20,6 +21,26 @@ export function WatchPageContent({
   episodeId,
   episodeNumber 
 }: WatchPageContentProps) {
+  useEffect(() => {
+    console.log("Loading episode:", {
+      animeId,
+      episodeId,
+      episodeNumber,
+      animeTitle: anime.title?.english || anime.title?.romaji,
+      totalEpisodes: anime.episodes
+    });
+  }, [animeId, episodeId, episodeNumber, anime]);
+
+  // Calculate a reasonable episode range for pagination if needed
+  const isLongRunning = !anime.episodes || anime.episodes > 100;
+  const currentEpisodeRange = isLongRunning ? {
+    start: Math.max(1, episodeNumber - 50),
+    end: episodeNumber + 50
+  } : {
+    start: 1,
+    end: anime.episodes || 1
+  };
+
   return (
     <>
       <div className="relative">
@@ -28,7 +49,7 @@ export function WatchPageContent({
           episodeId={episodeId}
           title={anime.title?.english || anime.title?.romaji || ""}
           episodeNumber={episodeNumber}
-          totalEpisodes={anime.episodes || 0}
+          totalEpisodes={anime.episodes || 9999} // Use a high number for ongoing series
           listAnimeData={{
             id: null,
             mediaId: null,
@@ -59,7 +80,7 @@ export function WatchPageContent({
           <div className="flex items-center gap-4">
             <WatchlistButton anime={anime} />
             <div className="text-sm text-muted-foreground">
-              {anime.episodes} Episodes • {anime.duration} mins
+              {anime.episodes ? `${anime.episodes} Episodes` : 'Ongoing'} • {anime.duration} mins
             </div>
           </div>
         </Card>
@@ -68,8 +89,9 @@ export function WatchPageContent({
           <h2 className="text-lg font-semibold">Episodes</h2>
           <EpisodeNavigation
             currentEpisode={episodeNumber}
-            totalEpisodes={anime.episodes || 0}
+            totalEpisodes={anime.episodes || 9999} // Use a high number for ongoing series
             animeId={parseInt(animeId)}
+            episodeRange={currentEpisodeRange}
           />
         </Card>
       </div>

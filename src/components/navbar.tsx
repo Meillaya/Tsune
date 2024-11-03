@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useTheme } from "next-themes";
@@ -29,7 +29,10 @@ export function Navbar() {
   const { theme, setTheme } = useTheme();
   const { isAuthenticated, user, logout } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  
+  const [scrolled, setScrolled] = useState(false);
+
+
+
   const handleLogin = () => {
     window.location.href = getAuthUrl();
   };
@@ -45,7 +48,16 @@ export function Navbar() {
     window.location.reload();
   };
 
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 0);
+    };
 
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  
   const navLinks = [
     { href: "/", label: "Home", icon: PlayCircle },
     { href: "/watchlist", label: "Watchlist", icon: BookmarkPlus },
@@ -53,7 +65,9 @@ export function Navbar() {
   ];
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className={`fixed top-0 z-50 w-full transition-all duration-300 ${
+      scrolled ? 'bg-background/80 backdrop-blur-md border-b border-white/5' : 'bg-transparent'
+    }`}>
       <nav className="container flex h-14 sm:h-16 items-center">
         <div className="flex items-center gap-2 sm:gap-6 flex-1">
           <Button

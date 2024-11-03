@@ -24,15 +24,39 @@ export default function WatchPage({ params }: PageProps) {
   async function loadAnime(): Promise<Media> {
     try {
       const data = await getAnimeInfo(animeId);
-      if (!data || episodeNumber < 1 || episodeNumber > (data.episodes || 0)) {
+      
+      // Add logging to debug the data
+      // console.log("Anime data:", data);
+      // console.log("Episode number:", episodeNumber);
+      // console.log("Total episodes:", data?.episodes);
+  
+      // More specific checks
+      if (!data) {
+        console.log("No anime data found");
         notFound();
       }
+  
+      if (episodeNumber < 1) {
+        console.log("Episode number less than 1");
+        notFound();
+      }
+  
+      if (data.episodes && episodeNumber > data.episodes) {
+        console.log("Episode number exceeds total episodes");
+        notFound();
+      }
+  
       return data;
     } catch (error) {
       console.error("Error loading anime:", error);
+      // Consider handling specific error types
+      if (error instanceof Error) {
+        console.error("Error message:", error.message);
+      }
       throw error;
     }
   }
+  
 
   const anime = use(loadAnime());
 

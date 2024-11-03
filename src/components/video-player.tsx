@@ -7,6 +7,7 @@ import { getUniversalEpisodeUrl } from "@/modules/providers/api";
 import { LoadingSpinner } from "@/components/loading-spinner";
 import Hls from 'hls.js';
 import hls from "hls.js";
+import { CachedLink } from '@/components/shared/cached-links'
 
 interface VideoPlayerProps {
   animeId: string;
@@ -25,6 +26,7 @@ export function VideoPlayer({
   totalEpisodes,
   listAnimeData,
 }: VideoPlayerProps) {
+  
   const router = useRouter();
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -41,6 +43,84 @@ export function VideoPlayer({
   const [providers, setProviders] = useState<{ name: string; sources: IVideo[] }[]>([]);
   const [currentProviderIndex, setCurrentProviderIndex] = useState(0);
   const [dubbed, setDubbed] = useState(false);
+  
+
+  useEffect(() => {
+    console.log("Starting video source effect with:", videoSource?.url);
+    if (!videoRef.current || !videoSource?.url) {
+      console.log("Missing requirements:", {
+        hasVideoRef: !!videoRef.current,
+        hasVideoSource: !!videoSource?.url
+      });
+      return;
+    }
+        
+    let hls: Hls | null = null;
+    
+    const initializeVideo = async () => {
+      console.log("Starting video initialization");
+  
+      if (!videoRef.current) return;
+      
+      try {
+        console.log("Video source type:", videoSource?.isM3U8 ? "HLS" : "Direct");
+        
+        if (videoSource.isM3U8) {
+          if (Hls.isSupported()) {
+            console.log("HLS is supported, configuring...");
+        
+            hls = new Hls({
+              enableWorker: true,
+              lowLatencyMode: true,
+              maxBufferLength: 60,
+              maxMaxBufferLength: 120,
+              maxBufferSize: 500 * 1000 * 1000,
+              maxBufferHole: 0.1,
+              highBufferWatchdogPeriod: 1,
+              nudgeOffset: 0.1,
+              startFragPrefetch: true,
+              progressive: true,
+              testBandwidth: true,
+              backBufferLength: 90,
+              abrEwmaDefaultEstimate: 500000,
+              abrBandWidthFactor: 0.95,
+              abrBandWidthUpFactor: 0.7,
+              abrMaxWithRealBitrate: true
+            });
+            console.log("HLS instance created");
+    
+            hls.on(Hls.Events.MANIFEST_PARSED, () => {
+              console.log("HLS manifest parsed");
+            });
+    
+            hls.on(Hls.Events.FRAG_LOADED, (event, data) => {
+              console.log(`Chunk loaded in ${data.frag.stats.loading.end - data.frag.stats.loading.start}ms`);
+            });
+    
+            hls.on(Hls.Events.ERROR, (event, data) => {
+              console.log("HLS error:", data);
+            });
+    
+            console.log("Loading source:", videoSource.url);
+            hls.loadSource(videoSource.url);
+            hls.attachMedia(videoRef.current);
+          }
+        }
+      } catch (error) {
+        console.error('Video initialization failed:', error);
+        setError("Failed to play video. Please try another source.");
+      }
+    };
+  
+    initializeVideo();
+  
+    return () => {
+      if (hls) {
+        console.log("Cleaning up HLS instance");
+        hls.destroy();
+      }
+    };
+  }, [videoSource]);
 
   useEffect(() => {
     const loadVideo = async () => {
@@ -64,43 +144,7 @@ export function VideoPlayer({
     loadVideo();
   }, [listAnimeData, episodeNumber]);
 
-  useEffect(() => {
-    if (!videoRef.current || !videoSource?.url) return;
-      
-    let hls: Hls | null = null;
-    
-    const initializeVideo = async () => {
-      if (!videoRef.current) return;
-
-      try {
-        if (videoSource.isM3U8) {
-          if (Hls.isSupported()) {
-            hls = new Hls({
-              enableWorker: true,
-              lowLatencyMode: true,
-            });
-            hls.loadSource(videoSource.url);
-            hls.attachMedia(videoRef.current);
-          } else if (videoRef.current.canPlayType('application/vnd.apple.mpegurl')) {
-            videoRef.current.src = videoSource.url;
-          }
-        } else {
-          videoRef.current.src = videoSource.url;
-        }
-      } catch (error) {
-        console.error('Failed to initialize video:', error);
-        setError("Failed to play video. Please try another source.");
-      }
-    };
-
-    initializeVideo();
   
-    return () => {
-      if (hls) {
-        hls.destroy();
-      }
-    };
-  }, [videoSource]);
 
   const handlePlayPause = () => {
     if (videoRef.current) {
@@ -138,15 +182,29 @@ export function VideoPlayer({
 
   const handlePreviousEpisode = () => {
     if (episodeNumber > 1) {
+      return (
+        <CachedLink 
+          listAnimeData={listAnimeData}
+          episode={episodeNumber - 1}
+        >
       router.push(`/watch/${animeId}/${episodeNumber - 1}`);
-    }
-  };
+      </CachedLink>
+    );
+  }
+};
 
-  const handleNextEpisode = () => {
-    if (episodeNumber < totalEpisodes) {
-      router.push(`/watch/${animeId}/${episodeNumber + 1}`);
-    }
-  };
+const handleNextEpisode = () => {
+  if (episodeNumber < totalEpisodes) {
+    return (
+      <CachedLink 
+        listAnimeData={listAnimeData}
+        episode={episodeNumber + 1}
+      >
+         router.push(`/watch/${animeId}/${episodeNumber + 1}`);
+      </CachedLink>
+    );
+  }
+};
 
   useEffect(() => {
     const handleFullscreenChange = () => {

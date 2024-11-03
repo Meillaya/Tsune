@@ -10,6 +10,7 @@ import { PlayCircle } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { formatTime } from "@/lib/utils";
+import { cacheService } from "@/lib/cache-service";
 
 interface WatchProgress {
   animeId: number;
@@ -27,6 +28,8 @@ export function ContinueWatchingSection() {
   const [watchProgress] = useLocalStorage<Record<string, WatchProgress>>("watch-progress", {});
   const [recentlyWatched, setRecentlyWatched] = useState<WatchProgress[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [cachedAnime, setCachedAnime] = useState([]);
+  
 
   useEffect(() => {
     if (isAuthenticated && lists) {

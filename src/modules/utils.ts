@@ -10,7 +10,7 @@ export async function proxyRequest(url: string, method: string = 'GET', headers:
       url,
       method,
       headers,
-      data // Include the data parameter in the proxy request
+      data
     })
   });
   return response.json();

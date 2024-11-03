@@ -17,7 +17,12 @@ type AnimeTabsProps = {
 }
 
 export function AnimeTabs({ anime }: AnimeTabsProps) {
-  const [activeTab, setActiveTab] = useState<'related' | 'recommendations'>('related')
+  const [activeTab, setActiveTab] = useState<'related' | 'recommendations'>(
+    anime.relations?.edges?.some(relation => 
+      relation?.node?.type === 'ANIME' && 
+      ['PREQUEL', 'SEQUEL', 'SIDE_STORY', 'PARENT', 'ALTERNATIVE'].includes(relation.relationType)
+    ) ? 'related' : 'recommendations'
+  );
   const scrollContainerRef = useRef<HTMLDivElement>(null)
 
   const handleScroll = (direction: 'left' | 'right') => {
@@ -28,27 +33,48 @@ export function AnimeTabs({ anime }: AnimeTabsProps) {
     container.scrollBy({ left: scrollAmount, behavior: 'smooth' })
   }
 
- const relatedAnime = anime.relations?.edges
-    .filter(relation => 
-      relation && 
-      relation.node && 
+  const relatedAnime = anime.relations?.edges
+  .filter(relation => {
+    // console.log('Relation:', {
+    //   hasRelation: !!relation,
+    //   hasNode: !!relation?.node,
+    //   type: relation?.node?.type,
+    //   relationType: relation?.relationType,
+    //   isValidType: relation?.node?.type === 'ANIME',
+    //   isValidRelation: ['PREQUEL', 'SEQUEL', 'SIDE_STORY', 'PARENT', 'ALTERNATIVE', 'OTHER'].includes(relation?.relationType)
+    // });
+    
+    return relation &&
+      relation.node &&
       relation.node.type === 'ANIME' &&
-      ['PREQUEL', 'SEQUEL', 'SIDE_STORY', 'PARENT', 'ALTERNATIVE'].includes(relation.relationType)
-    )
-    .map(relation => ({
-      ...relation.node,
-      relationType: relation.relationType
-    })) || [];
+      ['PREQUEL', 'SEQUEL', 'SIDE_STORY', 'PARENT', 'ALTERNATIVE', 'OTHER'].includes(relation.relationType);
+  })
+  .map(relation => ({
+    ...relation.node,
+    relationType: relation.relationType
+  })) || [];
 
-  // Process recommendations
-  const recommendedAnime = anime.recommendations?.nodes
-    ?.filter(node => node && node.mediaRecommendation)
-    .map(rec => rec.mediaRecommendation) || [];
   
-  // Update the null check condition
-  if (relatedAnime.length === 0 && recommendedAnime.length === 0) {
-    return null;
-  }
+  // console.log('Raw recommendations:', {
+  // hasNodes: !!anime.recommendations?.nodes,
+  // nodesLength: anime.recommendations?.nodes?.length,
+  // nodes: anime.recommendations?.nodes
+  // });
+
+  const recommendedAnime = anime.recommendations?.nodes
+    ?.filter(node => {
+      // console.log('Recommendation node:', {
+      //   hasNode: !!node,
+      //   hasMediaRec: !!node?.mediaRecommendation
+      // });
+      return node && node.mediaRecommendation;
+    })
+    .map(rec => rec.mediaRecommendation) || [];
+
+  // console.log('Final counts:', {
+  // relatedAnimeCount: relatedAnime.length,
+  // recommendedAnimeCount: recommendedAnime.length
+  // });
   
 
   return (

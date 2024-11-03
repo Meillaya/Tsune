@@ -39,12 +39,16 @@ export default async function Home() {
   const data = await getData();
 
   return (
-    <div className="space-y-8">
-      <Suspense fallback={<LoadingSpinner />}>
-        <FeaturedCarousel items={data.trending.slice(0, 6)} />
-      </Suspense>
+    <div className="relative min-h-screen">
+      <div className="absolute inset-0 bg-gradient-to-b from-background/0 via-background/50 to-background pointer-events-none" />
+      
+      <section className="relative w-full">
+        <Suspense fallback={<LoadingSpinner />}>
+          <FeaturedCarousel items={data.trending.slice(0, 6)} />
+        </Suspense>
+      </section>
 
-      <div className="container space-y-12">
+      <section className="relative z-10 container space-y-12 py-8">
         <Suspense fallback={<LoadingSpinner />}>
           <ContinueWatchingSection />
         </Suspense>
@@ -69,7 +73,7 @@ export default async function Home() {
             anime={data.topRated} 
           />
         </Suspense>
-      </div>
+      </section>
     </div>
   );
 }

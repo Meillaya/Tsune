@@ -2,14 +2,11 @@ import { IVideo } from '@consumet/extensions';
 import { ListAnimeData } from '@/types/anilistAPITypes';
 import { animeCustomTitles } from '../animeCustomTitles';
 import { getAvailableEpisodes, getParsedAnimeTitles } from '../utils';
-import { getEpisodeUrl as animedrive } from './animedrive';
-import { getEpisodeUrl as animeunity } from './animeunity';
 import { getEpisodeUrl as gogoanime } from './gogoanime';
-import { getEpisodeUrl as hianime } from './hianime';
-
-
+import { CachedLink } from '@/components/shared/cached-links'
 
 const API_BASE = '/api/anime'
+
 
 export const fetchFromProvider = async (provider: string, type: string, query: string) => {
   const response = await fetch(`${API_BASE}/${provider}?type=${type}&query=${encodeURIComponent(query)}`)
@@ -30,30 +27,47 @@ export const getUniversalEpisodeUrl = async (
   }
 
   const providers = [
-    // {
-    //   name: 'HiAnime',
-    //   fetch: async () => {
-    //     try {
-    //       const sources = await hianime(animeTitles, customTitle?.index || 0, episode, dubbed);
-    //       // Don't proxy the video URL itself, only the source fetching requests
-    //       return sources;
-    //     } catch (error) {
-    //       console.log(`HiAnime provider error: ${error}`);
-    //       return null;
-    //     }
-    //   }
-    // },
     {
       name: 'Gogoanime',
-      fetch: () => gogoanime(animeTitles, customTitle?.index || 0, episode, dubbed, listAnimeData.media.startDate?.year ?? 0)
+      fetch: async () => {
+        const sources = await gogoanime(
+          animeTitles, 
+          customTitle?.index || 0, 
+          episode, 
+          dubbed, 
+          listAnimeData.media.startDate?.year ?? 0
+        );
+        
+        // Preload next chunk while current is playing
+        if (sources?.[0]?.url) {
+          sources.forEach(source => {
+            const preloadLink = document.createElement('link');
+            preloadLink.rel = 'preload';
+            preloadLink.as = 'fetch';
+            preloadLink.href = source.url;
+            document.head.appendChild(preloadLink);
+          });
+        }
+
+        // if (episode < totalEpisodes) {
+        //   getUniversalEpisodeUrl(listAnimeData, episode + 1);
+        // }
+        
+        return sources?.sort((a, b) => {
+          const qualityA = parseInt(a.quality?.replace('p', '') ?? '0');
+          const qualityB = parseInt(b.quality?.replace('p', '') ?? '0');
+          return qualityB - qualityA;
+        });
+      }
     }
   ];
+
 
   for (const provider of providers) {
     try {
       const sources = await provider.fetch();
       if (sources && sources.length > 0) {
-        console.log(`Found source from ${provider.name}`);
+        console.log(`Found ${sources.length} quality options from ${provider.name}`);
         return sources;
       }
     } catch (error) {
@@ -64,4 +78,5 @@ export const getUniversalEpisodeUrl = async (
 
   return null;
 }
+
 
