@@ -7,6 +7,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 const cache = new ProviderCache();
 const consumet = new Gogoanime();
 
+
 export const getEpisodeUrl = async (
   animeTitles: string[],
   index: number,
@@ -67,9 +68,20 @@ async function searchEpisodeUrl(
       const animeEpisodeId = await getAnimeEpisodeId(animeId, episode);
       if (animeEpisodeId) {
         // Request all qualities
-        const data = await proxyRequest(`https://apiconsumet-gamma.vercel.app/anime/gogoanime/watch/${animeEpisodeId}?server=gogocdn`);
-        console.log(`Found sources for ${animeSearch}:`, data.sources);
-        return (cache.search[cacheId] = data.sources);
+        const [gogocdn, streamsb, vidstreaming] = await Promise.all([
+          proxyRequest(`https://apiconsumet-gamma.vercel.app/anime/gogoanime/watch/${animeEpisodeId}?server=gogocdn`),
+          proxyRequest(`https://apiconsumet-gamma.vercel.app/anime/gogoanime/watch/${animeEpisodeId}?server=streamsb`),
+          proxyRequest(`https://apiconsumet-gamma.vercel.app/anime/gogoanime/watch/${animeEpisodeId}?server=vidstreaming`)
+        ]);
+
+        const sources = [
+          ...(gogocdn?.sources || []),
+          ...(streamsb?.sources || []),
+          ...(vidstreaming?.sources || [])
+        ];
+
+        console.log(`Found sources for ${animeSearch}:`, sources);
+        return (cache.search[cacheId] = sources);
       }
     }
   } catch (error) {
@@ -79,6 +91,7 @@ async function searchEpisodeUrl(
 
   return (cache.search[cacheId] = null);
 }
+
 
 
 
@@ -97,9 +110,9 @@ export const getAnimeId = async (
   if(cache.animeIds[animeSearch] !== undefined)
     return cache.animeIds[animeSearch];
 
-  const data = await consumet.search(animeSearch);
+  const data = await proxyRequest(`https://apiconsumet-gamma.vercel.app/anime/gogoanime/${animeSearch}?page=1`);
 
-  const filteredResults = data.results.filter((result) =>
+  const filteredResults = data.results.filter((result: { title: string; }) =>
     dubbed
       ? (result.title as string).includes('(Dub)')
       : !(result.title as string).includes('(Dub)'),
@@ -107,7 +120,7 @@ export const getAnimeId = async (
 
   const result = (
     cache.animeIds[animeSearch] = filteredResults.filter(
-      (result) => result.releaseDate == releaseDate.toString() ||
+      (result: { releaseDate: string; title: string; }) => result.releaseDate == releaseDate.toString() ||
         result.title == animeSearch,
     )[index]?.id ?? null
   );
@@ -133,8 +146,8 @@ export const getAnimeEpisodeId = async (
       return found.id;
   }
 
-  const data = await consumet.fetchAnimeInfo(animeId);
+  const data = await proxyRequest(`https://apiconsumet-gamma.vercel.app/anime/gogoanime/info/${animeId}`);
   return (
     cache.episodes[animeId] = data?.episodes
-  )?.find((ep) => ep.number == episode)?.id ?? null;
+  )?.find((ep: { number: number; }) => ep.number == episode)?.id ?? null;
 };

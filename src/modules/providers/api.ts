@@ -3,6 +3,7 @@ import { ListAnimeData } from '@/types/anilistAPITypes';
 import { animeCustomTitles } from '../animeCustomTitles';
 import { getAvailableEpisodes, getParsedAnimeTitles } from '../utils';
 import { getEpisodeUrl as gogoanime } from './gogoanime';
+import { getEpisodeUrl as hianime } from './hianime';
 import { CachedLink } from '@/components/shared/cached-links'
 
 const API_BASE = '/api/anime'
@@ -59,7 +60,8 @@ export const getUniversalEpisodeUrl = async (
           return qualityB - qualityA;
         });
       }
-    }
+    },
+
   ];
 
 
@@ -80,3 +82,17 @@ export const getUniversalEpisodeUrl = async (
 }
 
 
+export const getBestQualityVideo = (videos: IVideo[]): IVideo => {
+  const qualityOrder = ['1080p', '720p', '480p', '360p', 'default', 'backup'];
+
+  videos.sort((a, b) => {
+    const indexA = qualityOrder.indexOf(a.quality || 'default');
+    const indexB = qualityOrder.indexOf(b.quality || 'default');
+
+    if (indexA < indexB) return -1;
+    if (indexA > indexB) return 1;
+    return 0;
+  });
+
+  return videos[0];
+};

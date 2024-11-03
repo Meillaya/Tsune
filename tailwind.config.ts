@@ -85,6 +85,12 @@ const config: Config = {
       },
     },
   },
-  plugins: [require('tailwindcss-animate')],
+  plugins: [
+    require('tailwindcss-animate'),
+    require('@vidstack/react/tailwind.cjs')({
+      selector: '.media-player',
+      prefix: 'media'
+    })
+  ],
 };
 export default config;

@@ -27,10 +27,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 }
 export const getEpisodeUrl = async (
-  animeTitles: string[],
-  index: number,
-  episode: number,
-  dubbed: boolean,
+animeTitles: string[], index: number, episode: number, dubbed: boolean, p0: number,
 ): Promise<IVideo[] | null> => {
   console.log('HiAnime search params:', {
     titles: animeTitles,
