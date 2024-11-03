@@ -13,6 +13,11 @@ import { Media } from "@/types/anilistGraphQLTypes";
 
 
 export function FeaturedCarousel({ items }: { items: Media[] }) {
+
+  const filteredItems = items.filter(
+    (anime) => anime.bannerImage
+  );
+  
   const [emblaRef, emblaApi] = useEmblaCarousel({ 
     loop: true,
     duration: 30,
@@ -58,7 +63,7 @@ export function FeaturedCarousel({ items }: { items: Media[] }) {
     <div className="relative group h-screen">
       <div className="overflow-hidden h-full" ref={emblaRef}>
         <div className="flex h-full">
-          {items.map((anime) => (
+          {filteredItems.map((anime) => (
             <div
               key={anime.id}
               className="relative h-screen min-w-full flex-[0_0_100%]"
@@ -142,7 +147,7 @@ export function FeaturedCarousel({ items }: { items: Media[] }) {
 </div>
 
       <div className="absolute bottom-4 sm:bottom-8 left-1/2 flex -translate-x-1/2 gap-1.5 sm:gap-2">
-        {items.map((_, index) => (
+        {filteredItems.map((_, index) => (
           <button
             key={index}
             onClick={() => emblaApi?.scrollTo(index)}

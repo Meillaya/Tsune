@@ -44,7 +44,7 @@ export default async function Home() {
       
       <section className="relative w-full">
         <Suspense fallback={<LoadingSpinner />}>
-          <FeaturedCarousel items={data.trending.slice(0, 6)} />
+          <FeaturedCarousel items={data.trending.slice(0, 12)} />
         </Suspense>
       </section>
 
