@@ -3,14 +3,9 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useLocalStorage } from '@/hooks/use-local-storage';
-import { Card } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { Button } from "@/components/ui/button";
-import { PlayCircle } from "lucide-react";
-import Image from "next/image";
-import Link from "next/link";
-import { formatTime } from "@/lib/utils";
-import { cacheService } from "@/lib/cache-service";
+import { Media } from "@/types/anilistGraphQLTypes";
+import { AnimeSection } from './anime-section';
+import { Card } from './ui/card';
 
 interface WatchProgress {
   animeId: number;
@@ -26,41 +21,57 @@ interface WatchProgress {
 export function ContinueWatchingSection() {
   const { isAuthenticated, lists } = useAuth();
   const [watchProgress] = useLocalStorage<Record<string, WatchProgress>>("watch-progress", {});
-  const [recentlyWatched, setRecentlyWatched] = useState<WatchProgress[]>([]);
+  const [recentlyWatched, setRecentlyWatched] = useState<Media[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [cachedAnime, setCachedAnime] = useState([]);
-  
 
   useEffect(() => {
+    const uniqueAnimeIds = new Set();
+    let watched: WatchProgress[] = [];
+
     if (isAuthenticated && lists) {
-      // Get recently watched from AniList data
-      const watched = lists
-        .filter(item => item.progress && item.progress > 0)
+      watched = lists
+        .filter(item => item.progress !== null)
+        .sort((a, b) => {
+          // Sort by progress in descending order
+          if (a.progress && b.progress) {
+            return b.progress - a.progress;
+          }
+          return 0;
+        })
         .map(item => ({
           animeId: item.media.id,
           episodeNumber: item.progress || 0,
-          timestamp: Date.now(), // AniList doesn't provide timestamp
-          progress: 100, // AniList doesn't provide episode progress
-          duration: 24 * 60, // Default episode length in seconds
+          timestamp: Date.now(),
+          progress: 100,
+          duration: 24 * 60,
           title: item.media.title?.english || item.media.title?.romaji || '',
           coverImage: item.media.coverImage?.large || '',
           totalEpisodes: item.media.episodes
         }))
-        .sort((a, b) => b.timestamp - a.timestamp)
-        .slice(0, 12);
 
-      setRecentlyWatched(watched);
     } else {
-      // Get recently watched from local storage
-      const watched = Object.values(watchProgress)
+      watched = Object.values(watchProgress)
         .sort((a, b) => b.timestamp - a.timestamp)
         .slice(0, 12);
-
-      setRecentlyWatched(watched);
     }
+
+    // Convert WatchProgress to Media format
+    const mediaList: Media[] = watched.map(item => ({
+      id: item.animeId,
+      title: {
+        english: item.title,
+        romaji: item.title
+      },
+      coverImage: {
+        large: item.coverImage
+      },
+      description: `Episode ${item.episodeNumber}${item.totalEpisodes ? ` of ${item.totalEpisodes}` : ''}`,
+      episodes: item.totalEpisodes || 0
+    }));
+
+    setRecentlyWatched(mediaList);
     setIsLoading(false);
   }, [isAuthenticated, lists, watchProgress]);
-
   if (isLoading) {
     return (
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
@@ -89,53 +100,10 @@ export function ContinueWatchingSection() {
   }
 
   return (
-    <div className="space-y-4">
-      <h2 className="text-2xl font-bold">Continue Watching</h2>
-      
-      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-        {recentlyWatched.map((item) => (
-          <Link 
-            key={`${item.animeId}-${item.episodeNumber}`}
-            href={`/watch/${item.animeId}/${item.episodeNumber + 1}`}
-          >
-            <Card className="overflow-hidden transition-transform hover:scale-[1.02]">
-              <div className="relative aspect-video group">
-                <Image
-                  src={item.coverImage}
-                  alt={item.title}
-                  fill
-                  className="object-cover"
-                />
-                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                  <Button size="sm" variant="secondary">
-                    <PlayCircle className="mr-2 h-4 w-4" />
-                    Continue
-                  </Button>
-                </div>
-              </div>
-              
-              <div className="p-4 space-y-2">
-                <h3 className="font-medium line-clamp-1">{item.title}</h3>
-                <div className="text-sm text-muted-foreground">
-                  Episode {item.episodeNumber}
-                  {item.totalEpisodes && ` of ${item.totalEpisodes}`}
-                </div>
-                
-                <div className="space-y-1">
-                  <Progress 
-                    value={item.progress} 
-                    className="h-1"
-                  />
-                  <div className="flex justify-between text-xs text-muted-foreground">
-                    <span>{formatTime(item.duration * (item.progress / 100))}</span>
-                    <span>{formatTime(item.duration)}</span>
-                  </div>
-                </div>
-              </div>
-            </Card>
-          </Link>
-        ))}
-      </div>
-    </div>
+    <AnimeSection 
+      title="Continue Watching" 
+      anime={recentlyWatched}
+      animeData={() => {}}
+    />
   );
 }

@@ -8,7 +8,8 @@ import {
 import { AiringPage, AiringSchedule, Media, MediaListStatus} from '../../types/anilistGraphQLTypes';
 import { ClientData } from '../../types/types';
 import { clientData } from '../clientData';
-
+import { useToast } from "@/hooks/use-toast";
+import { useWatchlist } from "@/hooks/use-watchlist";
 import { getOptions, makeRequest } from '../requests';
 import { proxyRequest } from '../utils';
 
@@ -1067,4 +1068,36 @@ export const updateAnimeProgress = async (
   await makeRequest(METHOD, GRAPH_QL_URL, headers, options);
 
   console.log(`Progress updated (${progress}) for anime ${mediaId}`);
+};
+
+export const syncLocalWatchlist = async (
+  getWatchlist: () => { watchlist: any[] },
+  showToast: (toast: { title: string; description: string; variant?: string }) => void
+): Promise<void> => {
+  const { watchlist } = getWatchlist(); // Get local watchlist
+
+  if (!watchlist) return;
+
+  try {
+    const promises = watchlist.map(async (entry) => {
+      if (entry.id && entry.media && entry.media.id && entry.media.episodes) { // Check properties exist
+          const status = entry.status.toUpperCase() as MediaListStatus;
+          await updateAnimeFromList(entry.id, status, undefined, entry.progress); // Sync data
+          console.log(`Synced anime ${entry.media.title?.english || entry.media.title?.romaji} (${entry.id})`);
+      }
+    });
+
+    await Promise.all(promises);
+    showToast({
+        title: "Success!",
+        description: "Your watchlist has been synced with AniList.",
+    });
+  } catch (error) {
+    console.error("Error syncing local watchlist:", error);
+    showToast({
+      title: "Error",
+      description: "Failed to sync watchlist. Please try again.",
+      variant: "destructive",
+    });
+  }
 };

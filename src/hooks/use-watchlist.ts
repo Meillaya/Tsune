@@ -14,6 +14,10 @@ export function useWatchlist() {
 
   useEffect(() => {
     if (!initialLoadDone.current) {
+         // Merge local watchlist with AniList list to avoid duplicates
+      const newList: WatchlistEntry[] = [];
+      const anilistIds = new Set<number>(); // Keep track of AniList anime IDs
+      const mergedEntries: Record<number, WatchlistEntry> = {};
       if (isAuthenticated && lists) {
         const syncedList = lists.map(item => ({
           id: item.mediaId || item.media.id,
@@ -28,7 +32,30 @@ export function useWatchlist() {
           },
           updatedAt: Date.now(),
         }));
-        setLocalWatchlist(syncedList);
+
+        lists.forEach((item) => {
+          anilistIds.add(item.media.id);
+          mergedEntries[item.media.id] = {
+              id: item.mediaId || item.media.id,
+              status: (item.status?.toLowerCase() || "watching") as WatchStatus,
+              progress: item.progress || 0,
+              media: {
+                  id: item.media.id,
+                  title: item.media.title,
+                  coverImage: item.media.coverImage,
+                  episodes: item.media.episodes,
+                  genres: item.media.genres,
+              },
+              updatedAt: Date.now(),
+            };
+        });
+
+        localWatchlist.forEach((item) => {
+          if (!anilistIds.has(item.id)) {
+            mergedEntries[item.id] = item
+          }
+      });
+       setLocalWatchlist(Object.values(mergedEntries));
       }
       initialLoadDone.current = true;
       setIsLoading(false);

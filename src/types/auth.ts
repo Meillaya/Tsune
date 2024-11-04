@@ -1,4 +1,5 @@
 export interface UserProfile {
+  [x: string]: string | number;
   id: number;
   name: string;
   avatar?: {

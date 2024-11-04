@@ -110,8 +110,9 @@ export async function handleAuthentication(token: string): Promise<AuthResponse>
 
 export function clearAuthData(): void {
   if (typeof window !== 'undefined') {
-    sessionStorage.removeItem("access_token");
+    sessionStorage.removeItem("access_token"); // May not be needed if token is in cookie
     sessionStorage.removeItem("viewer_id");
+    sessionStorage.removeItem("user_data");
     sessionStorage.removeItem("anime_lists");
   }
 }

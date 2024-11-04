@@ -24,7 +24,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-
+import { signIn, signOut, useSession } from "next-auth/react";
 export function Navbar() {
   const { theme, setTheme } = useTheme();
   const { isAuthenticated, user, logout } = useAuth();
@@ -128,6 +128,11 @@ export function Navbar() {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
+          <Link href="/profile">
+            <DropdownMenuItem>
+              Profile
+            </DropdownMenuItem>
+          </Link>
             <DropdownMenuItem onClick={handleLogout}>
               Log out
             </DropdownMenuItem>

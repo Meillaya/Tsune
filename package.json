@@ -66,6 +66,7 @@
     "install": "^0.13.0",
     "lucide-react": "^0.446.0",
     "next": "15.0.2",
+    "next-auth": "^4.24.10",
     "next-themes": "^0.3.0",
     "postcss": "8.4.30",
     "rate-limiter-flexible": "^5.0.4",

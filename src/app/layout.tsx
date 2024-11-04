@@ -8,7 +8,7 @@ import { ListsProvider } from '@/context/ListsContext';
 import { MainContent } from '@/components/main-content';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 
-
+import { SessionProvider } from "next-auth/react"
 const inter = Inter({ subsets: ['latin'] });
 const queryClient = new QueryClient()
 import QueryProvider from '@/components/providers/query-provider'

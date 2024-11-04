@@ -1,6 +1,8 @@
-import { useState, useEffect } from "react";
 import { authenticateUser, clearAuthSession, loadPersistedAuth } from "@/lib/auth";
+import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
 import type { AuthState, UserProfile, AnimeListEntry } from "@/types/auth";
+import { useRouter } from 'next/navigation';
 
 const initialState: AuthState = {
   isAuthenticated: false,
@@ -12,6 +14,8 @@ const initialState: AuthState = {
 
 export function useAuth() {
   const [state, setState] = useState<AuthState>(initialState);
+  const router = useRouter(); // Add the router hook
+
 
   useEffect(() => {
     const loadAuth = async () => {
@@ -50,6 +54,8 @@ export function useAuth() {
           isLoading: false,
           error: null
         });
+        
+        router.refresh(); // Refresh the current page after successful login
         return true;
       } else {
         setState(prev => ({
