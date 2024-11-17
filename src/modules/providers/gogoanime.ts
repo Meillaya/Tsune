@@ -110,7 +110,9 @@ export const getAnimeId = async (
   if(cache.animeIds[animeSearch] !== undefined)
     return cache.animeIds[animeSearch];
 
-  const data = await proxyRequest(`https://apiconsumet-gamma.vercel.app/anime/gogoanime/${animeSearch}?page=1`);
+  const data = await proxyRequest(
+    `https://apiconsumet-gamma.vercel.app/anime/gogoanime/${encodeURIComponent(animeSearch)}?page=1`
+  );
 
   const filteredResults = data.results.filter((result: { title: string; }) =>
     dubbed
@@ -146,7 +148,9 @@ export const getAnimeEpisodeId = async (
       return found.id;
   }
 
-  const data = await proxyRequest(`https://apiconsumet-gamma.vercel.app/anime/gogoanime/info/${animeId}`);
+  const data = await proxyRequest(
+    `https://apiconsumet-gamma.vercel.app/anime/gogoanime/info/${encodeURIComponent(animeId)}`
+  );
   return (
     cache.episodes[animeId] = data?.episodes
   )?.find((ep: { number: number; }) => ep.number == episode)?.id ?? null;

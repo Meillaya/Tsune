@@ -1,20 +1,22 @@
 import { Media } from "@/types/anilistGraphQLTypes";
 
-export async function proxyRequest(url: string, method: string = 'GET', headers: object = {}, data?: any) {
-  const response = await fetch('/api/anime/proxy', {
-    method: 'POST',
+export async function proxyRequest(url: string, method: string = 'GET', headers: object = {}) {
+  const params = new URLSearchParams({
+    url: url
+  });
+  
+  const response = await fetch(`/api/proxy?${params}`, {
+    method: method,
     headers: {
       'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      url,
-      method,
-      headers,
-      data
-    })
+      ...headers
+    }
   });
+  
   return response.json();
 }
+
+
 
 export function getParsedAnimeTitles(media: Media): string[] {
   const titles: string[] = [];

@@ -3,7 +3,7 @@ import { ListAnimeData } from '@/types/anilistAPITypes';
 import { animeCustomTitles } from '../animeCustomTitles';
 import { getAvailableEpisodes, getParsedAnimeTitles } from '../utils';
 import { getEpisodeUrl as gogoanime } from './gogoanime';
-import { getEpisodeUrl as hianime } from './hianime';
+import { getEpisodeUrl, getEpisodeUrl as hianime } from './hianime';
 import { CachedLink } from '@/components/shared/cached-links'
 
 const API_BASE = '/api/anime'
@@ -61,6 +61,35 @@ export const getUniversalEpisodeUrl = async (
         });
       }
     },
+
+    // {
+    //       name: 'HiAnime',
+    //       fetch: async () => {
+    //         const sources = await getEpisodeUrl(
+    //           animeTitles,
+    //           customTitle?.index || 0,
+    //           episode,
+    //           dubbed,
+    //           listAnimeData.media.startDate?.year ?? 0
+    //         );
+            
+    //         if (sources?.[0]?.url) {
+    //           sources.forEach(source => {
+    //             const preloadLink = document.createElement('link');
+    //             preloadLink.rel = 'preload';
+    //             preloadLink.as = 'fetch';
+    //             preloadLink.href = source.url;
+    //             document.head.appendChild(preloadLink);
+    //           });
+    //         }
+            
+    //         return sources?.sort((a, b) => {
+    //           const qualityA = parseInt(a.quality?.replace('p', '') ?? '0');
+    //           const qualityB = parseInt(b.quality?.replace('p', '') ?? '0');
+    //           return qualityB - qualityA;
+    //         });
+    //       }
+    //     },
 
   ];
 

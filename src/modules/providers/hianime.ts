@@ -2,11 +2,11 @@ import { IVideo } from '@consumet/extensions';
 import ProviderCache from './cache';
 import Zoro from '@consumet/extensions/dist/providers/anime/zoro';
 import axios from 'axios';
-import { getCacheId } from '../utils';
+import { getCacheId, proxyRequest  } from '../utils';
 
 const cache = new ProviderCache();
 const consumet = new Zoro();
-const apiUrl = 'https://aniwatch-api-ch0nker.vercel.app'
+const apiUrl = 'https://apiconsumet-gamma.vercel.app';
 import { NextApiRequest, NextApiResponse } from 'next';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -22,8 +22,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(200).json(info)
     
     case 'sources':
-      const sources = await consumet.fetchEpisodeSources(query as string)
-      return res.status(200).json(sources)
+      const servers = ["vidstreaming", "vidcloud", "streamsb", "streamtape"];
+      const sourcesPromises = servers.map(server => 
+        proxyRequest(`${apiUrl}/anime/zoro/watch/${query}?server=${server}`)
+      );
+      const sourcesResponses = await Promise.all(sourcesPromises);
+      const allSources = sourcesResponses.map(response => response.data);
+      return res.status(200).json(allSources)
   }
 }
 export const getEpisodeUrl = async (
@@ -82,50 +87,25 @@ async function searchEpisodeUrl(
     console.log('episodeId',animeEpisodeId)
     if (animeEpisodeId) {
       try {
-        const data = await consumet.fetchEpisodeSources(animeEpisodeId);
-        console.log(`%c ${animeSearch}`, `color: #45AD67`);
-        return (
-          cache.search[cacheId] = data.sources.map((value) => {
-              value.tracks = data.subtitles;
-              value.skipEvents = {
-                intro: data.intro,
-                outro: data.outro
-              };
-
-              return value;
-          }) ?? null
+        const servers = ["vidstreaming", "vidcloud", "streamsb", "streamtape"];
+        const sourcesPromises = servers.map(server => 
+          proxyRequest(`${apiUrl}/anime/zoro/watch/${animeEpisodeId}?server=${server}`)
         );
-      } catch {
-        /* consumet fails to get raw servers so this needed. damn */
-        const episodeId = animeEpisodeId.replace('$episode$', '?ep=').split('$')[0];
-
-        const servers = (await axios.get(
-          `${apiUrl}/anime/servers?episodeId=${episodeId}`
-        )).data;
-        const episodeInfo = await axios.get(
-          `${apiUrl}/anime/episode-srcs?id=${episodeId}&server=hd-1&category=${dubbed ?
-            'dub' :
-            servers.sub.length > 0 ? 'sub' : 'raw'
-          }`
-        );
-
-        return (
-          cache.search[cacheId] = (episodeInfo.data.sources as IVideo[]).map((value) => {
-              value.tracks = (episodeInfo.data.tracks as any[]).map(value => ({
-                url: value.file,
-                lang: value.label
-              }));
-
-              value.skipEvents = {
-                intro: episodeInfo.data.intro,
-                outro: episodeInfo.data.outro
-              };
-
-              console.log(value.tracks)
-
-              return value;
-          }) ?? null
-        )
+        const sourcesResponses = await Promise.all(sourcesPromises);
+        const allSources = sourcesResponses.flatMap(response => {
+          return response.data.sources.map((value: any) => {
+            value.tracks = response.data.subtitles;
+            value.skipEvents = {
+              intro: response.data.intro,
+              outro: response.data.outro
+            };
+            return value;
+          });
+        });
+        return (cache.search[cacheId] = allSources ?? null);
+      } catch (error) {
+        console.error('Failed to fetch sources:', error);
+        return null;
       }
     }
   }

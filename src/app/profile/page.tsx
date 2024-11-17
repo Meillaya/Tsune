@@ -132,7 +132,7 @@ export default function ProfilePage() {
         </Card>
 
         <Card className="col-span-1">
-          <Tabs defaultValue="anime" value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <Tabs defaultValue="anime" value={activeTab} onValueChange={(value: "anime" | "manga") => setActiveTab(value)} className="w-full">
             <TabsList className="grid grid-cols-2">
               <TabsTrigger value="anime">Anime Lists</TabsTrigger>
               <TabsTrigger value="manga">Manga Lists</TabsTrigger>

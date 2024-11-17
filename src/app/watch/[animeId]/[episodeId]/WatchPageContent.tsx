@@ -87,12 +87,6 @@ export function WatchPageContent({
 
         <Card className="p-6 space-y-4">
           <h2 className="text-lg font-semibold">Episodes</h2>
-          <EpisodeNavigation
-            currentEpisode={episodeNumber}
-            totalEpisodes={anime.episodes || 9999} // Use a high number for ongoing series
-            animeId={parseInt(animeId)}
-            episodeRange={currentEpisodeRange}
-          />
         </Card>
       </div>
     </>

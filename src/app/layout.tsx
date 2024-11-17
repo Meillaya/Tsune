@@ -7,8 +7,8 @@ import { HistoryProvider } from "@/context/HistoryContext";
 import { ListsProvider } from '@/context/ListsContext';
 import { MainContent } from '@/components/main-content';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import AuthProvider from '@/components/providers/auth-provider'
 
-import { SessionProvider } from "next-auth/react"
 const inter = Inter({ subsets: ['latin'] });
 const queryClient = new QueryClient()
 import QueryProvider from '@/components/providers/query-provider'
@@ -26,6 +26,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
+    <AuthProvider>
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
         <ListsProvider>
@@ -49,5 +50,6 @@ export default function RootLayout({
         </ListsProvider>
       </body>
     </html>
+    </AuthProvider>
   );
 }

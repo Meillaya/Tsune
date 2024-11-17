@@ -25,27 +25,22 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { signIn, signOut, useSession } from "next-auth/react";
+
+
 export function Navbar() {
   const { theme, setTheme } = useTheme();
-  const { isAuthenticated, user, logout } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const { data: session } = useSession();
 
 
 
   const handleLogin = () => {
-    window.location.href = getAuthUrl();
+    signIn("anilist");
   };
   
   const handleLogout = () => {
-    // Clear all session storage
-    sessionStorage.clear();
-    
-    // Clear all local storage
-    localStorage.clear();
-    
-    // Refresh the page to reset app state
-    window.location.reload();
+    signOut();
   };
 
   useEffect(() => {
@@ -57,7 +52,8 @@ export function Navbar() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  
+
+
   const navLinks = [
     { href: "/", label: "Home", icon: PlayCircle },
     { href: "/watchlist", label: "Watchlist", icon: BookmarkPlus },
@@ -115,13 +111,13 @@ export function Navbar() {
             <span className="sr-only">Toggle theme</span>
           </Button>
 
-          {isAuthenticated && user ? (
+          {session ? (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="relative h-9 w-9 rounded-full">
               <Image
-                src={user.avatar?.medium || ""}
-                alt={user.name}
+                src={session.user?.image || ""}
+                alt={session.user?.name || ""}
                 fill
                 className="rounded-full object-cover"
               />
@@ -144,7 +140,7 @@ export function Navbar() {
           onClick={handleLogin}
           className="ml-2"
         >
-          Login with AniList
+          Sign In
         </Button>
       )}
         </div>

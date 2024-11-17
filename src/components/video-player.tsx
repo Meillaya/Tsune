@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { MediaPlayer, MediaProvider, useMediaPlayer } from '@vidstack/react';
+import { isHLSProvider, MediaPlayer, MediaProviderAdapter, MediaProvider, useMediaPlayer } from '@vidstack/react';
 import { DefaultVideoLayout, defaultLayoutIcons } from '@vidstack/react/player/layouts/default';
 import '@vidstack/react/player/styles/default/theme.css';
 import '@vidstack/react/player/styles/default/layouts/video.css';
@@ -10,8 +10,8 @@ import { getUniversalEpisodeUrl } from "@/modules/providers/api";
 import { LoadingSpinner } from "@/components/loading-spinner";
 import { CachedLink } from '@/components/shared/cached-links'
 import { useLocalStorage } from "@/hooks/use-local-storage";
-
-
+import { getProxyUrl } from "@/modules/utils";
+import Hls from 'hls.js';
 
 interface VideoPlayerProps {
   animeId: string;
@@ -33,89 +33,102 @@ export function VideoPlayer({
   const router = useRouter();
   const [videoSource, setVideoSource] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSourceReady, setIsSourceReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [subtitles, setSubtitles] = useState<{ url: string, lang: string }[]>([]);
+  const [subtitles, setSubtitles] = useState<{ url: string; lang: string }[]>([]);
   const [thumbnails, setThumbnails] = useState<string>('');
   const [cachedSources, setCachedSources] = useLocalStorage<Record<string, IVideo[]>>("cached-sources", {});
- 
 
-
-  function PlayerControls() {
-    const player = useMediaPlayer();
-    // Use player here
-    return null;
-  }
   useEffect(() => {
+    let mounted = true;
+    setIsSourceReady(false);
     const loadVideo = async () => {
+      console.log('Loading video started');
       setIsLoading(true);
       setError(null);
-      const cacheKey = `${animeId}-${episodeNumber}`; // create cache key
 
-      if (cachedSources[cacheKey]) {
-        // Use cached sources if available
-        const bestSource = cachedSources[cacheKey][0];
-        setVideoSource(bestSource.url);
-        setSubtitles(bestSource.tracks || []);
+      const cacheKey = `${animeId}-${episodeNumber}`;
+      if (!mounted) return;
 
-        if (bestSource.isM3U8) {
-          setThumbnails(`https://${new URL(bestSource.url).hostname.replace('sbfull.com', 'thumb.sbplay.org')}/hls/${new URL(bestSource.url).searchParams.get('id')}/thumbs.vtt`);
-      } else {
-          setThumbnails(`https://${new URL(bestSource.url).hostname.replace('sbfull.com', 'thumb.sbplay.org')}/preview/${new URL(bestSource.url).pathname.split('/').pop()}.vtt`)
-      }
-
-
-        setIsLoading(false);
-      } else {
-        try {
+      try {
+        if (cachedSources[cacheKey]) {
+          const bestSource = cachedSources[cacheKey][0];
+          const proxyUrl = `/api/proxy?url=${encodeURIComponent(bestSource.url)}&type=m3u8`;
+          console.log('Best Source URL:', bestSource.url);
+          console.log('Proxy URL:', proxyUrl);
+          setVideoSource(proxyUrl);
+          setSubtitles(bestSource.tracks || []);
+          setThumbnails(getThumbnailUrl(bestSource.url, bestSource.isM3U8));
+        } else {
           const sources = await getUniversalEpisodeUrl(listAnimeData, episodeNumber);
-          if (!sources || sources.length === 0) {
-            throw new Error("No video sources found");
-          }
-          
-          // Cache the sources
+          if (!sources || sources.length === 0) throw new Error("No video sources found");
           setCachedSources(prev => ({ ...prev, [cacheKey]: sources }));
-  
           const bestSource = sources[0];
+          console.log('Best Source URL:', bestSource.url);
 
-          if (bestSource.url) {
-            setVideoSource(bestSource.url);
-          } else {
-            throw new Error("Source URL is missing");
-          }
+      
+
+          const proxyUrl = `/api/proxy?url=${encodeURIComponent(bestSource.url)}&type=m3u8`;
+          console.log("Proxy URL:", proxyUrl);
+          setVideoSource(proxyUrl);
+          setThumbnails(getThumbnailUrl(bestSource.url, bestSource.isM3U8));
           if (bestSource.tracks) {
-            setSubtitles(bestSource.tracks)
-          }
-
-          if (bestSource.isM3U8) {
-              setThumbnails(`https://${new URL(bestSource.url).hostname.replace('sbfull.com', 'thumb.sbplay.org')}/hls/${new URL(bestSource.url).searchParams.get('id')}/thumbs.vtt`);
+            setSubtitles(bestSource.tracks);
           } else {
-              setThumbnails(`https://${new URL(bestSource.url).hostname.replace('sbfull.com', 'thumb.sbplay.org')}/preview/${new URL(bestSource.url).pathname.split('/').pop()}.vtt`)
+            setSubtitles([]);
           }
-
-        } catch (err) {
-          console.error("Failed to load video:", err);
-          setError("Failed to load video. Please try again later.");
-        } finally {
-          setIsLoading(false);
         }
+      } catch (err) {
+        console.error("Failed to load video:", err);
+        setError("Failed to load video. Please try again later.");
+      } finally {
+        setIsLoading(false);
       }
+
+      setIsSourceReady(true);
     };
 
     loadVideo();
+
+    return () => {
+      mounted = false;
+      setIsSourceReady(false);
+      setVideoSource(null);
+    };
   }, [listAnimeData, episodeNumber, animeId, cachedSources]);
 
-  const handlePreviousEpisode = () => {
-    if (episodeNumber > 1) {
-      router.push(`/watch/${animeId}/${episodeNumber - 1}`);
+  function getThumbnailUrl(sourceUrl: string, isM3U8: boolean) {
+    try {
+      const url = new URL(sourceUrl);
+      const hostname = url.hostname.replace('sbfull.com', 'thumb.sbplay.org');
+      if (isM3U8) {
+        const id = url.searchParams.get('id');
+        return id ? `https://${hostname}/hls/${id}/thumbs.vtt` : '';
+      } else {
+        const pathSegments = url.pathname.split('/');
+        const lastSegment = pathSegments[pathSegments.length - 1];
+        return lastSegment ? `https://${hostname}/preview/${lastSegment}.vtt` : '';
+      }
+    } catch {
+      return '';
     }
-  };
+  }
 
-  const handleNextEpisode = () => {
-    if (episodeNumber < totalEpisodes) {
-      router.push(`/watch/${animeId}/${episodeNumber + 1}`);
+  function onError(error: any) {
+    console.log('HLS Error:', error);
+  }
+
+  function onProviderChange(provider: MediaProviderAdapter | null) {
+    if (isHLSProvider(provider)) {
+      provider.library = Hls;
+      provider.config = {
+        enableWorker: true,
+        lowLatencyMode: true,
+        backBufferLength: 90
+      };
     }
-  };
-
+  }
+  
   if (isLoading) {
     return (
       <div className="aspect-video bg-black rounded-lg shadow-lg flex items-center justify-center">
@@ -142,18 +155,37 @@ export function VideoPlayer({
 
   return (
     <MediaPlayer 
+      key={videoSource}
       title={title} 
-      src={videoSource!}
+      src={{
+        src: videoSource!,
+        type: 'application/vnd.apple.mpegurl'
+      }}
       poster={listAnimeData.media?.coverImage?.extraLarge}
       autoplay
+      muted
       crossOrigin='anonymous'
+      onProviderChange={(provider) => {
+        if (isHLSProvider(provider)) {
+          provider.library = Hls;
+          provider.config = {
+            enableWorker: true,
+            lowLatencyMode: true,
+            backBufferLength: 90,
+            xhrSetup: (xhr, url) => {
+              xhr.withCredentials = false;
+            }
+          };
+        }
+      }}
+      onError={onError}
+      
     >
       <MediaProvider />
-      <PlayerControls />
       <DefaultVideoLayout
-          thumbnails={thumbnails}
-          icons={defaultLayoutIcons} 
-          className="!border-0 !shadow-none" 
+        thumbnails={thumbnails}
+        icons={defaultLayoutIcons} 
+        className="!border-0 !shadow-none" 
       />
     </MediaPlayer>
   );
