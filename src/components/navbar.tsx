@@ -6,8 +6,7 @@ import Image from "next/image";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import { SearchCommand } from "@/components/search-command";
-import { useAuth } from "@/hooks/useAuth";
-import { getAuthUrl } from "@/lib/auth";
+
 import {
   Moon,
   Sun,
@@ -36,7 +35,7 @@ export function Navbar() {
 
 
   const handleLogin = () => {
-    signIn("anilist");
+    signIn("AniListProvider");
   };
   
   const handleLogout = () => {
@@ -81,7 +80,7 @@ export function Navbar() {
 
           <Link href="/" className="flex items-center space-x-2">
             <PlayCircle className="h-6 w-6 text-primary" />
-            <span className="hidden font-bold sm:inline-block">AniStream</span>
+            <span className="hidden font-bold sm:inline-block">Tsune</span>
           </Link>
 
           <div className="hidden md:flex gap-6">
@@ -112,37 +111,34 @@ export function Navbar() {
           </Button>
 
           {session ? (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="relative h-9 w-9 rounded-full">
-              <Image
-                src={session.user?.image || ""}
-                alt={session.user?.name || ""}
-                fill
-                className="rounded-full object-cover"
-              />
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="relative h-9 w-9 rounded-full">
+                  {session.user?.image?.medium ? (
+                    <Image
+                      src={session.user.image.medium}
+                      alt={session.user?.name || "User avatar"}
+                      fill
+                      className="rounded-full object-cover"
+                    />
+                  ) : (
+                    // Fallback for when image is not available
+                    <div className="h-full w-full rounded-full bg-muted" />
+                  )}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <Link href="/profile">
+                  <DropdownMenuItem>Profile</DropdownMenuItem>
+                </Link>
+                <DropdownMenuItem onClick={handleLogout}>Log out</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <Button variant="outline" onClick={handleLogin} className="ml-2">
+              Sign In
             </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-          <Link href="/profile">
-            <DropdownMenuItem>
-              Profile
-            </DropdownMenuItem>
-          </Link>
-            <DropdownMenuItem onClick={handleLogout}>
-              Log out
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      ) : (
-        <Button 
-          variant="outline"
-          onClick={handleLogin}
-          className="ml-2"
-        >
-          Sign In
-        </Button>
-      )}
+          )}
         </div>
       </nav>
 

@@ -39,57 +39,40 @@ export const getUniversalEpisodeUrl = async (
           listAnimeData.media.startDate?.year ?? 0
         );
         
-        // Preload next chunk while current is playing
-        if (sources?.[0]?.url) {
-          sources.forEach(source => {
-            const preloadLink = document.createElement('link');
-            preloadLink.rel = 'preload';
-            preloadLink.as = 'fetch';
-            preloadLink.href = source.url;
-            document.head.appendChild(preloadLink);
-          });
+        if (sources && sources.length > 0) {
+          const bestSource = getBestQualityVideo(sources);
+          const preloadLink = document.createElement('link');
+          preloadLink.rel = 'preload';
+          preloadLink.as = 'fetch';
+          preloadLink.href = bestSource.url;
+          document.head.appendChild(preloadLink);
         }
-
-        // if (episode < totalEpisodes) {
-        //   getUniversalEpisodeUrl(listAnimeData, episode + 1);
-        // }
         
-        return sources?.sort((a, b) => {
-          const qualityA = parseInt(a.quality?.replace('p', '') ?? '0');
-          const qualityB = parseInt(b.quality?.replace('p', '') ?? '0');
-          return qualityB - qualityA;
-        });
-      }
-    },
+        return sources;
+      }    },
 
-    // {
-    //       name: 'HiAnime',
-    //       fetch: async () => {
-    //         const sources = await getEpisodeUrl(
-    //           animeTitles,
-    //           customTitle?.index || 0,
-    //           episode,
-    //           dubbed,
-    //           listAnimeData.media.startDate?.year ?? 0
-    //         );
+    {
+          name: 'HiAnime',
+          fetch: async () => {
+            const sources = await getEpisodeUrl(
+              animeTitles,
+              customTitle?.index || 0,
+              episode,
+              dubbed,
+              listAnimeData.media.startDate?.year ?? 0
+            );
             
-    //         if (sources?.[0]?.url) {
-    //           sources.forEach(source => {
-    //             const preloadLink = document.createElement('link');
-    //             preloadLink.rel = 'preload';
-    //             preloadLink.as = 'fetch';
-    //             preloadLink.href = source.url;
-    //             document.head.appendChild(preloadLink);
-    //           });
-    //         }
+            if (sources && sources.length > 0) {
+              const bestSource = getBestQualityVideo(sources);
+              const preloadLink = document.createElement('link');
+              preloadLink.rel = 'preload';
+              preloadLink.as = 'fetch';
+              preloadLink.href = bestSource.url;
+              document.head.appendChild(preloadLink);
+            }
             
-    //         return sources?.sort((a, b) => {
-    //           const qualityA = parseInt(a.quality?.replace('p', '') ?? '0');
-    //           const qualityB = parseInt(b.quality?.replace('p', '') ?? '0');
-    //           return qualityB - qualityA;
-    //         });
-    //       }
-    //     },
+            return sources;
+          }        },
 
   ];
 

@@ -14,9 +14,14 @@ const queryClient = new QueryClient()
 import QueryProvider from '@/components/providers/query-provider'
 
 export const metadata: Metadata = {
-  title: 'AniStream - Anime Streaming Platform',
-  description: 'Watch your favorite anime shows and movies',
-};
+  title: 'Tsune',
+  description: 'Simple and easy to use open source anime streaming site without ads.',
+  icons: {
+    icon: '/favicon.png',
+    shortcut: '/favicon.png',
+    apple: '/favicon.png',
+  },
+}
 
 export const revalidate = 3600 // Revalidate every hour
 

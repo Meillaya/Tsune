@@ -27,10 +27,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const additionalHeaders = JSON.parse(headersParam);
       Object.entries(additionalHeaders).forEach(([key, value]) => {
         if (!["Access-Control-Allow-Origin", "Access-Control-Allow-Methods", "Access-Control-Allow-Headers"].includes(key)) {
-          headers[key] = value as string;
+          headers[key as keyof typeof headers] = value as string;
         }
-      });
-    }
+      });    }
 
     if (url.pathname.endsWith(".m3u8")) {
       const response = await fetch(url, { headers });
@@ -49,29 +48,44 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     else if (url.pathname.endsWith(".ts")) {
-      const protocol = url.protocol === 'https:' ? https : http;
-      const options = {
-        hostname: url.hostname,
-        port: url.port || (url.protocol === 'https:' ? 443 : 80),
-        path: url.pathname + url.search,
-        method: 'GET',
-        headers
-      };
-
-      const proxy = protocol.request(options, (response) => {
-        res.setHeader("Content-Type", "video/mp2t");
-        res.setHeader("Access-Control-Allow-Origin", "*");
-        response.pipe(res);
-      });
-
-      proxy.on('error', (error) => {
-        console.error('Proxy error:', error);
-        res.status(500).json({ error: 'Proxy request failed' });
-      });
-
-      proxy.end();
-      return;
-    }
+        const protocol = url.protocol === 'https:' ? https : http;
+        const options = {
+          hostname: url.hostname,
+          port: url.port || (url.protocol === 'https:' ? 443 : 80),
+          path: url.pathname + url.search,
+          method: 'GET',
+          headers
+        };
+      
+        const proxy = protocol.request(options, (response) => {
+          res.setHeader("Content-Type", "video/mp2t");
+          res.setHeader("Access-Control-Allow-Origin", "*");
+          
+          response.pipe(res);
+          
+          response.on('error', (error) => {
+            console.error('Response error:', error);
+            if (!res.headersSent) {
+              res.status(500).json({ error: 'Stream error' });
+            }
+          });
+        });
+      
+        req.on('close', () => {
+          proxy.destroy();
+        });
+      
+        proxy.on('error', (error) => {
+          console.error('Proxy error:', error);
+          if (!res.headersSent) {
+            res.status(500).json({ error: 'Proxy request failed' });
+          }
+        });
+      
+        proxy.end();
+        return;
+      }
+      
 
     else {
         const response = await fetch(url, { 

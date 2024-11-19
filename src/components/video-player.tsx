@@ -8,9 +8,7 @@ import { ListAnimeData } from "@/types/anilistAPITypes";
 import { IVideo } from "@consumet/extensions";
 import { getUniversalEpisodeUrl } from "@/modules/providers/api";
 import { LoadingSpinner } from "@/components/loading-spinner";
-import { CachedLink } from '@/components/shared/cached-links'
 import { useLocalStorage } from "@/hooks/use-local-storage";
-import { getProxyUrl } from "@/modules/utils";
 import Hls from 'hls.js';
 
 interface VideoPlayerProps {
@@ -61,6 +59,20 @@ export function VideoPlayer({
           setThumbnails(getThumbnailUrl(bestSource.url, bestSource.isM3U8));
         } else {
           const sources = await getUniversalEpisodeUrl(listAnimeData, episodeNumber);
+          if (sources?.[0]?.url) {
+            // Only preload the primary video source
+            const preloadLink = document.createElement('link');
+            preloadLink.rel = 'preload';
+            preloadLink.as = 'fetch';
+            preloadLink.href = sources[0].url;
+            
+            // Remove preload link after it's no longer needed
+            setTimeout(() => {
+              document.head.removeChild(preloadLink);
+            }, 10000);
+            
+            document.head.appendChild(preloadLink);
+          }
           if (!sources || sources.length === 0) throw new Error("No video sources found");
           setCachedSources(prev => ({ ...prev, [cacheKey]: sources }));
           const bestSource = sources[0];
@@ -162,9 +174,8 @@ export function VideoPlayer({
         type: 'application/vnd.apple.mpegurl'
       }}
       poster={listAnimeData.media?.coverImage?.extraLarge}
-      autoplay
-      muted
       crossOrigin='anonymous'
+      autoPlay
       onProviderChange={(provider) => {
         if (isHLSProvider(provider)) {
           provider.library = Hls;

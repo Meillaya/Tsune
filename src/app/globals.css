@@ -108,3 +108,18 @@ html {
 html {
   scroll-behavior: smooth;
 }
+
+.video-container {
+  position: relative;
+  width: 100%;
+  background: black;
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.theater-mode {
+  max-height: 84vh;
+  width: 100vw;
+  margin-left: calc(-50vw + 50%);
+  margin-right: calc(-50vw + 50%);
+}
