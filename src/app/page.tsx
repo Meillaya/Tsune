@@ -77,3 +77,65 @@ export default async function Home() {
     </div>
   );
 }
+
+export interface CurrentMediaTypes {
+  status?: string;
+  name: string;
+  entries: Entry[];
+}
+
+export interface Entry {
+  id: number;
+  mediaId: number;
+  status: string;
+  progress: number;
+  score: number;
+  media: Media;
+}
+
+export interface Media {
+  id: number;
+  status: string;
+  nextAiringEpisode: any;
+  title: Title;
+  episodes: number;
+  coverImage: CoverImage;
+}
+
+export interface Title {
+  english: string;
+  romaji: string;
+}
+
+export interface CoverImage {
+  large: string;
+}
+
+export interface UserDataType {
+  id: string;
+  name: string;
+  setting: Setting;
+  WatchListEpisode: WatchListEpisode[];
+}
+
+export interface Setting {
+  CustomLists: boolean;
+}
+
+export interface WatchListEpisode {
+  id: string;
+  aniId?: string;
+  title?: string;
+  aniTitle?: string;
+  image?: string;
+  episode?: number;
+  timeWatched?: number;
+  duration?: number;
+  provider?: string;
+  nextId?: string;
+  nextNumber?: number;
+  dub?: boolean;
+  createdDate: string;
+  userProfileId: string;
+  watchId: string;
+}

@@ -55,8 +55,6 @@ export function Navbar() {
 
   const navLinks = [
     { href: "/", label: "Home", icon: PlayCircle },
-    { href: "/watchlist", label: "Watchlist", icon: BookmarkPlus },
-    { href: "/stats", label: "Stats", icon: BarChart2 },
   ];
 
   return (
@@ -128,7 +126,7 @@ export function Navbar() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <Link href="/profile">
+                <Link href={`/profile/${session?.user?.name}`}>
                   <DropdownMenuItem>Profile</DropdownMenuItem>
                 </Link>
                 <DropdownMenuItem onClick={handleLogout}>Log out</DropdownMenuItem>
