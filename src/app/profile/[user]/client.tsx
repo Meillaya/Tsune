@@ -310,50 +310,13 @@ export default function MyListClient({
                                     </div>
                                   </div>
                                 </div>
-                                <div className="group relative flex items-center gap-4 rounded-lg px-4 py-2 hover:bg-accent/50">
-                                  <div className="relative">
-                                    <Image
-                                      src={entry.media.coverImage.large}
-                                      alt="Cover Image"
-                                      width={500}
-                                      height={500}
-                                      className="w-10 h-14 object-cover rounded-md transition-transform group-hover:scale-105"
-                                    />
-                                    <div className="absolute right-full top-0 -translate-x-2 invisible group-hover:visible z-50">
-                                      <div className="relative bg-background/80 backdrop-blur-sm p-2 rounded-lg shadow-xl transform transition-all duration-200 scale-95 group-hover:scale-100">
-                                        <div className="relative w-32 aspect-[2/3]">
-                                          <Image
-                                            src={entry.media.coverImage.large}
-                                            alt={String(entry.media.id)}
-                                            fill
-                                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                                            className="object-cover rounded-md"
-                                            quality={90}
-                                          />
-                                          <div className="absolute inset-0 rounded-md bg-gradient-to-t from-background/90 via-background/30 to-transparent" />
-                                          <div className="absolute bottom-3 left-3 right-3">
-                                            <p className="text-xs font-medium line-clamp-2 text-white">
-                                              {entry.media.title.romaji}
-                                            </p>
-                                            {entry.media.status === "RELEASING" && (
-                                              <span className="inline-flex items-center mt-1 text-[10px] text-primary">
-                                                <div className="w-1.5 h-1.5 rounded-full bg-primary mr-1 animate-pulse" />
-                                                Currently Airing
-                                              </span>
-                                            )}
-                                          </div>
-                                        </div>
-                                      </div>
-                                    </div>
-                                  </div>
-                                  <Link
-                                    href={`/anime/${entry.media.id}`}
-                                    className="font-medium text-sm hover:text-primary transition-colors line-clamp-1"
-                                    title={entry.media.title.romaji}
-                                  >
-                                    {entry.media.title.romaji}
-                                  </Link>
-                                </div>
+                                <Link
+                                  href={`/anime/${entry.media.id}`}
+                                  className="font-medium text-sm hover:text-primary transition-colors line-clamp-1"
+                                  title={entry.media.title.romaji}
+                                >
+                                  {entry.media.title.romaji}
+                                </Link>
                               </div>
                             </td>
                             <td className="py-2 px-4 text-center">
