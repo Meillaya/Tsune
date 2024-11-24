@@ -22,8 +22,8 @@ export default async function Page({ params }: { params: { user: string } }) {
   // Get the session first
   const session = await getServerSession(authOptions);
   
-  // Resolve the username parameter first
-  const username = await Promise.resolve(params.user);
+  // Get the username from params
+  const username = params.user;
 
   const user = await fetch("https://graphql.anilist.co/", {
     method: "POST",
