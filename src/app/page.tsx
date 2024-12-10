@@ -7,7 +7,10 @@ import {
 import { LoadingSpinner } from "@/components/loading-spinner";
 import { FeaturedCarousel } from "@/components/featured-carousel";
 import { AnimeSection } from "@/components/anime-section";
-import { ContinueWatchingSection } from "@/components/ContinueWatchingSection";
+import ContinueWatchingSection from "@/components/ContinueWatchingSection";
+import PlanToWatchClient from "@/components/home/PlanToWatchClient";
+import MangaClient from "@/components/home/MangaClient";
+
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -52,7 +55,15 @@ export default async function Home() {
         <Suspense fallback={<LoadingSpinner />}>
           <ContinueWatchingSection />
         </Suspense>
+
+        <Suspense fallback={<LoadingSpinner />}>
+          <PlanToWatchClient />
+        </Suspense>
         
+        <Suspense fallback={<LoadingSpinner />}>
+          <MangaClient />
+        </Suspense>
+
         <Suspense fallback={<LoadingSpinner />}>
           <AnimeSection 
             title="Trending Now" 
